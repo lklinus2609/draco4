@@ -14,6 +14,7 @@
 #include <unordered_map>
 #include <variant>
 #include <cstdint>
+#include "jd8_pdo_structures.hpp"
 
 namespace jd8 {
 
@@ -251,15 +252,7 @@ private:
     std::string filename_;                                ///< Source filename
     
     // === Parameter Index Constants ===
-    
-    static constexpr uint16_t POSITION_GAINS_INDEX = 0x2010;
-    static constexpr uint16_t VELOCITY_GAINS_INDEX = 0x2011;
-    static constexpr uint16_t CURRENT_GAINS_INDEX = 0x2012;
-    static constexpr uint16_t MOTOR_CONFIG_INDEX = 0x2110;
-    static constexpr uint16_t CIA402_MAX_SPEED_INDEX = 0x6080;
-    static constexpr uint16_t CIA402_VELOCITY_RES_INDEX = 0x6081;
-    static constexpr uint16_t CIA402_POSITION_LIMITS_INDEX = 0x607D;
-    static constexpr uint16_t CIA402_TORQUE_LIMITS_INDEX = 0x6072;
+    // (Object dictionary indices moved to JD8Constants to avoid duplication)
 };
 
 } // namespace jd8

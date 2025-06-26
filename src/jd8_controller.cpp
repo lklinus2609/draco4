@@ -21,6 +21,8 @@ JD8Controller::JD8Controller(int slave_index)
       motor_enabled_(false), current_mode_(VELOCITY_MODE), enable_step_(0),
       output_pdo_(nullptr), input_pdo_(nullptr),
       current_torque_command_(0), target_torque_command_(0), fault_recovery_active_(false),
+      target_position_command_(0), current_position_command_(0),
+      target_velocity_command_(0), current_velocity_command_(0),
       last_position_command_(0) {
     last_position_time_ = std::chrono::steady_clock::now();
 }
@@ -168,8 +170,13 @@ void JD8Controller::update() {
         ec_send_processdata();
         int wkc = ec_receive_processdata(EC_TIMEOUTRET);
         
+        // Execute control commands based on active mode (mutually exclusive)
         if (current_mode_ == TORQUE_MODE || fault_recovery_active_) {
             ramp_torque_command();
+        } else if (current_mode_ == POSITION_MODE) {
+            update_position_command();
+        } else if (current_mode_ == VELOCITY_MODE) {
+            update_velocity_command();
         }
         
         if (has_fault() && !fault_recovery_active_) {
@@ -212,11 +219,14 @@ bool JD8Controller::disable_motor() {
     fault_recovery_active_ = false;
     current_torque_command_ = 0;
     target_torque_command_ = 0;
+    target_velocity_command_ = 0;
+    target_position_command_ = 0;
     
     if (output_pdo_) {
         output_pdo_->controlword = JD8Constants::CONTROLWORD_SHUTDOWN;
         output_pdo_->target_velocity = 0;
         output_pdo_->target_torque = 0;
+        output_pdo_->target_position = 0;
     }
     return true;
 }
@@ -234,15 +244,23 @@ bool JD8Controller::set_velocity_rpm(int rpm) {
         return false;
     }
     
-    if (output_pdo_) {
+    target_velocity_command_ = rpm;
+    
+    if (current_mode_ != VELOCITY_MODE && output_pdo_) {
+        // Clear position commands when switching to velocity mode
+        target_position_command_ = get_actual_position_counts();
+        current_position_command_ = target_position_command_;
+        output_pdo_->target_position = static_cast<uint32_t>(target_position_command_);
+        
+        // Set velocity mode
         output_pdo_->modes_of_operation = JD8Constants::VELOCITY_MODE;
-        output_pdo_->target_velocity = JD8Constants::rpm_to_counts(rpm);
-        output_pdo_->controlword = JD8Constants::CONTROLWORD_ENABLE_OPERATION;
+        output_pdo_->controlword = JD8Constants::CONTROLWORD_VELOCITY_MODE;
         current_mode_ = VELOCITY_MODE;
-        return true;
+        
+        std::cout << "Mode switched to VELOCITY_MODE, position commands cleared" << std::endl;
     }
     
-    return false;
+    return true;
 }
 
 bool JD8Controller::set_position_counts(int32_t position) {
@@ -251,38 +269,35 @@ bool JD8Controller::set_position_counts(int32_t position) {
         return false;
     }
     
-    auto now = std::chrono::steady_clock::now();
-    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - last_position_time_);
+    // GEAR RATIO ANALYSIS: PDO goes to motor shaft, but user commands output shaft position
+    // To achieve desired output shaft position, motor shaft must move 7.75x more
+    int32_t motor_shaft_position = static_cast<int32_t>(position * JD8Constants::GEAR_REDUCTION_RATIO);
     
-    if (elapsed.count() > 0 && last_position_time_ != std::chrono::steady_clock::time_point{}) {
-        int32_t current_pos = get_actual_position_counts();
-        int32_t position_change = abs(position - current_pos);
-        int32_t max_change = JD8Constants::MAX_POSITION_CHANGE_PER_CYCLE * elapsed.count();  // Rate limit based on 4ms cycles (250Hz)
+    target_position_command_ = motor_shaft_position;
+    
+    // Debug logging for position command scaling
+#if JD8_DEBUG_LOGGING
+    std::cout << "[POS] target_output_shaft=" << position 
+              << " → motor_shaft_scaled=" << motor_shaft_position
+              << " (×" << JD8Constants::GEAR_REDUCTION_RATIO << ")" << std::endl;
+#endif
+    
+    if (current_mode_ != POSITION_MODE && output_pdo_) {
+        // Clear velocity commands when switching to position mode
+        target_velocity_command_ = 0;
+        current_velocity_command_ = 0;
+        output_pdo_->target_velocity = 0;
         
-        if (position_change > max_change) {
-            log_error(ErrorSeverity::WARNING, 
-                      "Position change " + std::to_string(position_change) + 
-                      " counts exceeds rate limit of " + std::to_string(max_change) + 
-                      " counts. Command will be applied gradually.");
-            
-            int32_t direction = (position > current_pos) ? 1 : -1;
-            position = current_pos + (direction * max_change);
-        }
-    }
-    
-    if (output_pdo_) {
+        // Set position mode
         output_pdo_->modes_of_operation = JD8Constants::POSITION_MODE;
-        output_pdo_->target_position = static_cast<uint32_t>(position);
-        output_pdo_->controlword = JD8Constants::CONTROLWORD_ENABLE_OPERATION;
+        output_pdo_->controlword = JD8Constants::CONTROLWORD_POSITION_MODE;
         current_mode_ = POSITION_MODE;
+        current_position_command_ = get_actual_position_counts();  // This is already motor shaft position
         
-        last_position_command_ = position;
-        last_position_time_ = now;
-        
-        return true;
+        std::cout << "Mode switched to POSITION_MODE, velocity commands cleared" << std::endl;
     }
     
-    return false;
+    return true;
 }
 
 bool JD8Controller::set_torque_millinm(int16_t torque) {
@@ -299,9 +314,21 @@ bool JD8Controller::set_torque_millinm(int16_t torque) {
     }
     
     if (current_mode_ != TORQUE_MODE && output_pdo_) {
+        // Clear other mode commands when switching to torque mode
+        target_velocity_command_ = 0;
+        current_velocity_command_ = 0;
+        output_pdo_->target_velocity = 0;
+        
+        target_position_command_ = get_actual_position_counts();
+        current_position_command_ = target_position_command_;
+        output_pdo_->target_position = static_cast<uint32_t>(target_position_command_);
+        
+        // Set torque mode
         output_pdo_->modes_of_operation = JD8Constants::TORQUE_MODE;
         output_pdo_->controlword = JD8Constants::CONTROLWORD_ENABLE_OPERATION;
         current_mode_ = TORQUE_MODE;
+        
+        std::cout << "Mode switched to TORQUE_MODE, other commands cleared" << std::endl;
     }
     
     return true;
@@ -325,23 +352,50 @@ const char* JD8Controller::get_motor_state_string() const {
     return "UNKNOWN";
 }
 
-int JD8Controller::get_actual_velocity_rpm() const {
-    if (input_pdo_) {
-        return JD8Constants::rpm_from_counts(input_pdo_->velocity_actual);
-    }
-    return 0;
-}
-
 double JD8Controller::get_actual_velocity_rpm_precise() const {
     if (input_pdo_) {
-        return JD8Constants::rpm_from_counts_precise(input_pdo_->velocity_actual);
+        // Calculate and log all scaling steps
+        uint32_t raw_pdo = input_pdo_->velocity_actual;
+        int32_t signed_pdo = static_cast<int32_t>(raw_pdo);
+        double motor_shaft_rpm = static_cast<double>(signed_pdo) / 1000.0;
+        double output_shaft_rpm = motor_shaft_rpm / JD8Constants::GEAR_REDUCTION_RATIO;
+        
+        // Debug logging for velocity feedback scaling
+#if JD8_DEBUG_LOGGING
+        std::cout << "[FB] raw_pdo_uint32=" << raw_pdo
+                  << " → signed_int32=" << signed_pdo  
+                  << " → motor_shaft_rpm=" << motor_shaft_rpm
+                  << " → output_shaft_rpm=" << output_shaft_rpm
+                  << " → returning_motor_shaft=" << motor_shaft_rpm << std::endl;
+#endif
+        
+        // Return motor shaft RPM for now (we can add separate function for output shaft if needed)
+        return motor_shaft_rpm;
+    }
+    return 0.0;
+}
+
+double JD8Controller::get_actual_output_shaft_rpm() const {
+    if (input_pdo_) {
+        uint32_t raw_pdo = input_pdo_->velocity_actual;
+        int32_t signed_pdo = static_cast<int32_t>(raw_pdo);
+        double motor_shaft_rpm = static_cast<double>(signed_pdo) / 1000.0;
+        return motor_shaft_rpm / JD8Constants::GEAR_REDUCTION_RATIO;
     }
     return 0.0;
 }
 
 int32_t JD8Controller::get_actual_position_counts() const {
     if (input_pdo_) {
-        return input_pdo_->position_actual;
+        return input_pdo_->position_actual;  // Returns motor shaft position
+    }
+    return 0;
+}
+
+int32_t JD8Controller::get_actual_output_shaft_position_counts() const {
+    if (input_pdo_) {
+        int32_t motor_shaft_position = input_pdo_->position_actual;
+        return static_cast<int32_t>(motor_shaft_position / JD8Constants::GEAR_REDUCTION_RATIO);
     }
     return 0;
 }
@@ -453,6 +507,7 @@ int JD8Controller::enable_motor_sequence() {
             
             if ((status & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_OPERATION_ENABLED_VALUE) {
                 motor_enabled_ = true;
+                std::cout << "Motor enable detected: status=0x" << std::hex << status << ", masked=0x" << (status & JD8Constants::STATUSWORD_STATE_MASK) << std::dec << std::endl;
                 return 4;
             }
             return 3;
@@ -522,6 +577,59 @@ void JD8Controller::ramp_torque_command() {
     }
 }
 
+void JD8Controller::update_position_command() {
+    if (!output_pdo_) return;
+    
+    int32_t position_diff = target_position_command_ - current_position_command_;
+    
+    if (position_diff == 0) {
+        return;
+    }
+    
+    int32_t max_step = JD8Constants::MAX_POSITION_CHANGE_PER_CYCLE;
+    int32_t step = position_diff;
+    
+    if (abs(position_diff) > max_step) {
+        step = (position_diff > 0) ? max_step : -max_step;
+    }
+    
+    current_position_command_ += step;
+    output_pdo_->target_position = static_cast<uint32_t>(current_position_command_);
+    output_pdo_->controlword = JD8Constants::CONTROLWORD_POSITION_MODE;
+}
+
+void JD8Controller::update_velocity_command() {
+    if (!output_pdo_) return;
+    
+    current_velocity_command_ = target_velocity_command_;
+    
+    // GEAR RATIO ANALYSIS: PDO goes to motor shaft, but user commands output shaft velocity
+    // To achieve desired output shaft RPM, motor shaft must run 7.75x faster
+    double motor_shaft_rpm = current_velocity_command_ * JD8Constants::GEAR_REDUCTION_RATIO;
+    
+    // Calculate and log all scaling steps
+    uint32_t raw_command = static_cast<uint32_t>(current_velocity_command_);
+    uint32_t gear_scaled_command = static_cast<uint32_t>(motor_shaft_rpm);
+    uint32_t final_scaled_command = static_cast<uint32_t>(motor_shaft_rpm * 1000);
+    
+    output_pdo_->target_velocity = final_scaled_command;
+    
+    // Debug logging for velocity command scaling
+#if JD8_DEBUG_LOGGING
+    std::cout << "[CMD] target_output_shaft_rpm=" << target_velocity_command_ 
+              << " → motor_shaft_rpm=" << motor_shaft_rpm
+              << " → raw_uint32=" << raw_command
+              << " → gear_scaled=" << gear_scaled_command
+              << " → final_1000x=" << final_scaled_command
+              << " → sent_to_pdo=" << output_pdo_->target_velocity << std::endl;
+#endif
+    
+    // Only update control word if motor is enabled and we're in velocity mode
+    if (motor_enabled_ && current_mode_ == VELOCITY_MODE) {
+        output_pdo_->controlword = JD8Constants::CONTROLWORD_ENABLE_OPERATION;
+    }
+}
+
 void JD8Controller::handle_fault_recovery() {
     log_error(ErrorSeverity::WARNING, "Fault detected - initiating torque ramp down");
     
@@ -561,7 +669,7 @@ bool JD8Controller::load_configuration(const std::string& config_file) {
     
     // Verify scaling factor matches our corrected constants
     double config_scaling = config_parser_->calculateVelocityScalingFactor();
-    double code_scaling = JD8Constants::VELOCITY_FACTOR;
+    double code_scaling = JD8Constants::RPM_SCALING_FACTOR;
     
     if (std::abs(config_scaling - code_scaling) > 0.001) {
         log_error(ErrorSeverity::WARNING, 

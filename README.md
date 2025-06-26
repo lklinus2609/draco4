@@ -58,15 +58,14 @@ while (running) {
 
 The project includes several test programs:
 
-- `test_jd8_init` - Basic initialization test
-- `test_jd8_velocity` - Velocity control test
-- `test_jd8_position` - Position control test
+- `test_simple_velocity` - Velocity control with gear ratio scaling
+- `test_jd8_position` - Position control with gear ratio scaling  
 - `test_jd8_torque` - Torque control test
-- `test_jd8_integration` - Integration test
+- `test_sdo_integration` - SDO and configuration integration test
 
 Run with:
 ```bash
-sudo ./test_jd8_velocity eth0  # Replace with your interface
+sudo ./test_simple_velocity eth0  # Replace with your interface
 ```
 
 ## Project Structure

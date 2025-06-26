@@ -53,10 +53,10 @@ int main(int argc, char* argv[]) {
     
     std::cout << "New configuration uploaded successfully" << std::endl;
     
-    // Test 157.5 RPM
-    std::cout << "\nTesting 157.5 RPM..." << std::endl;
+    // Test 157.5 RPM (rounded to 158 for integer input)
+    std::cout << "\nTesting 158 RPM (target was 157.5)..." << std::endl;
     int32_t start_pos = motor.get_actual_position_counts();
-    motor.set_velocity_rpm(157.5);
+    motor.set_velocity_rpm(158);
     
     // Start timing measurement
     auto start_time = std::chrono::steady_clock::now();

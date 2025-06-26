@@ -55,11 +55,7 @@ target_link_libraries(draco_test_legacy ${SOEM_LIBRARIES} pthread)
 # Test Suite
 # =====================================
 
-# Basic functionality tests
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_jd8_init.cpp)
-    add_executable(test_jd8_init tests/test_jd8_init.cpp)
-    target_link_libraries(test_jd8_init draco4_ethercat)
-endif()
+# Core functionality tests
 
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_jd8_position.cpp)
@@ -73,11 +69,6 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_jd8_torque.cpp)
 endif()
 
 
-# Configuration parser test
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_config_parser.cpp)
-    add_executable(test_config_parser tests/test_config_parser.cpp)
-    target_link_libraries(test_config_parser draco4_ethercat)
-endif()
 
 
 # SDO integration test
@@ -93,4 +84,5 @@ if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_simple_velocity.cpp)
     add_executable(test_simple_velocity tests/test_simple_velocity.cpp)
     target_link_libraries(test_simple_velocity draco4_ethercat)
 endif()
+
 

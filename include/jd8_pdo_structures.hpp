@@ -64,16 +64,17 @@ public:
     // === Motor Specifications ===
     static constexpr int COUNTS_PER_REV = 524288;         ///< Encoder counts per revolution
     static constexpr double GEAR_REDUCTION_RATIO = 7.75;  ///< Gear reduction ratio (motor:output = 7.75:1)
-    static constexpr double VELOCITY_FACTOR = 0.147665;   ///< Velocity scaling factor (from config)
-    static constexpr int MAX_VELOCITY_RPM = 1000;         ///< Maximum safe velocity in RPM
+    static constexpr int MAX_VELOCITY_RPM = 315;         ///< Maximum safe velocity in RPM
+    
+    // === Velocity Scaling ===
+    static constexpr double RPM_SCALING_FACTOR = 0.001;   ///< Motor config 0x60A9: 0.001 RPM units
     
     // === Configuration-Based Parameters ===
-    static constexpr uint32_t VELOCITY_RESOLUTION = 77419; ///< Drive velocity resolution from config
-    static constexpr double CALCULATED_VELOCITY_FACTOR = static_cast<double>(VELOCITY_RESOLUTION) / static_cast<double>(COUNTS_PER_REV);
+    static constexpr uint32_t PROFILE_VELOCITY_DEFAULT = 77419; ///< Default profile velocity (0x6081) from config
     
     // === Control Modes ===
     static constexpr uint8_t VELOCITY_MODE = 0x09;      ///< Profile velocity mode
-    static constexpr uint8_t POSITION_MODE = 0x08;      ///< Profile position mode
+    static constexpr uint8_t POSITION_MODE = 0x08;      ///< Profile position mode  
     static constexpr uint8_t TORQUE_MODE = 0x0A;        ///< Torque control mode
     
     // === CIA402 Control Words ===
@@ -83,6 +84,15 @@ public:
     static constexpr uint16_t CONTROLWORD_DISABLE_VOLTAGE = 0x0000;    ///< Disable voltage
     static constexpr uint16_t CONTROLWORD_QUICK_STOP = 0x0002;         ///< Quick stop
     static constexpr uint16_t CONTROLWORD_FAULT_RESET = 0x0080;        ///< Fault reset
+    
+    // === Profile Position Mode Control Word Bits ===
+    static constexpr uint16_t CONTROLWORD_NEW_SETPOINT = 0x0010;       ///< Bit 4: New set-point
+    static constexpr uint16_t CONTROLWORD_CHANGE_SET_IMMEDIATELY = 0x0020;  ///< Bit 5: Change set immediately
+    static constexpr uint16_t CONTROLWORD_POSITION_MODE = CONTROLWORD_ENABLE_OPERATION | CONTROLWORD_NEW_SETPOINT | CONTROLWORD_CHANGE_SET_IMMEDIATELY;  ///< Complete position control word
+    
+    // === Profile Velocity Mode Control Word Bits ===
+    static constexpr uint16_t CONTROLWORD_HALT = 0x0100;              ///< Bit 8: Halt (1=stop, 0=execute motion)
+    static constexpr uint16_t CONTROLWORD_VELOCITY_MODE = CONTROLWORD_ENABLE_OPERATION;  ///< Velocity control word (halt bit clear)
     
     // === CIA402 Status Word Masks and Values ===
     static constexpr uint16_t STATUSWORD_STATE_MASK = 0x006F;         ///< State detection mask
@@ -98,6 +108,17 @@ public:
     static constexpr double RT_FREQUENCY_HZ = 250.0;         ///< RT kernel frequency: 250Hz
     static constexpr double CYCLE_TIME_MS = 4.0;             ///< RT cycle time: 4ms per cycle
     
+    // === Object Dictionary Indices (CIA402 and Synapticon-specific) ===
+    static constexpr uint16_t POSITION_GAINS_INDEX = 0x2010;      ///< Position PID gains
+    static constexpr uint16_t VELOCITY_GAINS_INDEX = 0x2011;      ///< Velocity PID gains  
+    static constexpr uint16_t CURRENT_GAINS_INDEX = 0x2012;       ///< Current PID gains
+    static constexpr uint16_t MOTOR_CONFIG_INDEX = 0x2110;        ///< Motor configuration
+    static constexpr uint16_t CIA402_MAX_SPEED_INDEX = 0x6080;    ///< CIA402 max motor speed
+    static constexpr uint16_t CIA402_PROFILE_VELOCITY_INDEX = 0x6081; ///< CIA402 profile velocity (NOT resolution!)
+    static constexpr uint16_t CIA402_POSITION_LIMITS_INDEX = 0x607D; ///< CIA402 position limits
+    static constexpr uint16_t CIA402_TORQUE_LIMITS_INDEX = 0x6072;   ///< CIA402 torque limits
+    
+    
     // === Torque Control Constants ===
     static constexpr int16_t RATED_TORQUE_MNM = 6000;        ///< Rated torque: 6 Nm = 6000 mNm
     static constexpr int16_t PDO_TORQUE_SCALE = 1000;        ///< PDO scale: 1000 = full torque
@@ -106,60 +127,33 @@ public:
     static constexpr int16_t TORQUE_RAMP_RATE = 200;         ///< Torque ramp: 200 mNm per 4ms cycle (250Hz)
     
     // === Position Control Safety Limits ===
-    static constexpr int32_t MAX_POSITION_CHANGE_PER_CYCLE = 200000;  ///< Max position change per 4ms cycle (250Hz)
+    static constexpr int32_t MAX_POSITION_CHANGE_PER_CYCLE = 2097152;  ///< Max position change per 4ms cycle (4 revolutions = 4 * 524288)
     static constexpr int32_t MAX_POSITION_CHANGE_PER_SECOND = 50000000; ///< Max position change per second (250 cycles × 200k)
     
-    // === Utility Functions ===
+    // === Velocity Conversions (0.001 RPM scaling per 0x60A9 config) ===
     
     /**
-     * @brief Convert RPM to encoder counts for PDO commands
+     * @brief Convert RPM to velocity PDO units 
      * @param rpm Velocity in revolutions per minute
-     * @return Velocity in encoder counts per minute (for PDO command)
-     * @note Uses raw encoder counts - no scaling factor for commands
+     * @return Velocity PDO value (motor expects RPM_SCALING_FACTOR units)
+     * @note Motor config 0x60A9 = 0.001 RPM, so 158 RPM → send 158000
      */
-    static int32_t rpm_to_counts(int rpm) {
-        return static_cast<int32_t>((rpm * COUNTS_PER_REV) / 60.0);
+    static uint32_t rpm_to_velocity_pdo(int rpm) {
+        return static_cast<uint32_t>(rpm / RPM_SCALING_FACTOR);
     }
     
     /**
-     * @brief Convert RPM to encoder counts with velocity scaling (for reference)
-     * @param rpm Velocity in revolutions per minute
-     * @return Velocity in scaled encoder counts per minute
-     * @note This version applies velocity scaling factor - use for calculations
+     * @brief Convert velocity PDO to RPM
+     * @param velocity_pdo_value Raw velocity PDO value from motor
+     * @return Actual velocity in RPM
+     * @note Motor config 0x60A9 = RPM_SCALING_FACTOR, so PDO * scaling = actual RPM
      */
-    static int32_t rpm_to_counts_scaled(int rpm) {
-        return static_cast<int32_t>((rpm * COUNTS_PER_REV * VELOCITY_FACTOR) / 60.0);
+    static double velocity_pdo_to_rpm(uint32_t velocity_pdo_value) {
+        return static_cast<double>(static_cast<int32_t>(velocity_pdo_value)) * RPM_SCALING_FACTOR;
     }
     
-    /**
-     * @brief Convert encoder counts to RPM (corrected - no scaling factor)
-     * @param counts Velocity in encoder counts per minute
-     * @return Velocity in revolutions per minute
-     * @note Uses raw encoder counts - no velocity factor applied
-     */
-    static int rpm_from_counts(int32_t counts) {
-        return static_cast<int>(static_cast<double>(counts * 60) / COUNTS_PER_REV);
-    }
+    // === Position Conversions ===
     
-    /**
-     * @brief Convert encoder counts to RPM with precise calculation
-     * @param counts Velocity in encoder counts per minute
-     * @return Velocity in revolutions per minute (double precision)
-     * @note Uses raw encoder counts - no velocity factor applied
-     */
-    static double rpm_from_counts_precise(int32_t counts) {
-        return static_cast<double>(counts * 60) / COUNTS_PER_REV;
-    }
-    
-    /**
-     * @brief Convert encoder counts to RPM with velocity scaling (legacy)
-     * @param counts Velocity in encoder counts per minute
-     * @return Velocity in RPM using the velocity scaling factor
-     * @note This version applies velocity scaling - kept for reference
-     */
-    static double rpm_from_counts_with_scaling(int32_t counts) {
-        return static_cast<double>(counts * 60) / (COUNTS_PER_REV * VELOCITY_FACTOR);
-    }
     
     /**
      * @brief Convert position change to output shaft RPM (accounts for gear reduction)

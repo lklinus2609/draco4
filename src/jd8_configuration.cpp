@@ -176,8 +176,8 @@ bool JD8ConfigParser::validateParameters() {
     }
     
     // Check for critical parameters
-    bool has_encoder_res = getParameter(MOTOR_CONFIG_INDEX, 3) != nullptr;
-    bool has_velocity_res = getParameter(CIA402_VELOCITY_RES_INDEX, 0) != nullptr;
+    bool has_encoder_res = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3) != nullptr;
+    bool has_velocity_res = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0) != nullptr;
     
     if (!has_encoder_res) {
         addError("Missing critical parameter: Encoder resolution (0x2110,3)");
@@ -216,35 +216,35 @@ JD8ConfigParser::ControlGains JD8ConfigParser::getControlGains() const {
     ControlGains gains;
     
     // Position gains (0x2010)
-    if (const Parameter* p = getParameter(POSITION_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 1)) {
         gains.position_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(POSITION_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 2)) {
         gains.position_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(POSITION_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 3)) {
         gains.position_kd = getParameterValue<double>(p, 0.0);
     }
     
     // Velocity gains (0x2011)
-    if (const Parameter* p = getParameter(VELOCITY_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 1)) {
         gains.velocity_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(VELOCITY_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 2)) {
         gains.velocity_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(VELOCITY_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 3)) {
         gains.velocity_kd = getParameterValue<double>(p, 0.0);
     }
     
     // Current gains (0x2012)
-    if (const Parameter* p = getParameter(CURRENT_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 1)) {
         gains.current_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(CURRENT_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 2)) {
         gains.current_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(CURRENT_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 3)) {
         gains.current_kd = getParameterValue<double>(p, 0.0);
     }
     
@@ -255,22 +255,22 @@ JD8ConfigParser::MotorSpecs JD8ConfigParser::getMotorSpecs() const {
     MotorSpecs specs;
     
     // Encoder resolution (0x2110,3)
-    if (const Parameter* p = getParameter(MOTOR_CONFIG_INDEX, 3)) {
+    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3)) {
         specs.encoder_resolution = getParameterValue<uint32_t>(p, 524288);
     }
     
     // Velocity resolution (0x6081,0)
-    if (const Parameter* p = getParameter(CIA402_VELOCITY_RES_INDEX, 0)) {
+    if (const Parameter* p = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
         specs.velocity_resolution = getParameterValue<uint32_t>(p, 1);
     }
     
     // Max speed (0x6080,0)
-    if (const Parameter* p = getParameter(CIA402_MAX_SPEED_INDEX, 0)) {
+    if (const Parameter* p = getParameter(JD8Constants::CIA402_MAX_SPEED_INDEX, 0)) {
         specs.max_speed = getParameterValue<uint32_t>(p, 1000);
     }
     
     // Rated current (0x2110,4)
-    if (const Parameter* p = getParameter(MOTOR_CONFIG_INDEX, 4)) {
+    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 4)) {
         specs.rated_current = getParameterValue<uint16_t>(p, 4000);
     }
     
@@ -281,10 +281,10 @@ JD8ConfigParser::SafetyLimits JD8ConfigParser::getSafetyLimits() const {
     SafetyLimits limits;
     
     // Position limits (0x607D)
-    if (const Parameter* p = getParameter(CIA402_POSITION_LIMITS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 1)) {
         limits.position_limit_min = getParameterValue<int32_t>(p, -2147483648);
     }
-    if (const Parameter* p = getParameter(CIA402_POSITION_LIMITS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 2)) {
         limits.position_limit_max = getParameterValue<int32_t>(p, 2147483647);
     }
     
@@ -292,14 +292,14 @@ JD8ConfigParser::SafetyLimits JD8ConfigParser::getSafetyLimits() const {
 }
 
 uint32_t JD8ConfigParser::getEncoderResolution() const {
-    if (const Parameter* p = getParameter(MOTOR_CONFIG_INDEX, 3)) {
+    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3)) {
         return getParameterValue<uint32_t>(p, 524288);
     }
     return 524288;  // Default fallback
 }
 
 uint32_t JD8ConfigParser::getVelocityResolution() const {
-    if (const Parameter* p = getParameter(CIA402_VELOCITY_RES_INDEX, 0)) {
+    if (const Parameter* p = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
         return getParameterValue<uint32_t>(p, 1);
     }
     return 1;  // Default fallback
@@ -358,7 +358,7 @@ void JD8ConfigParser::printSummary() const {
     // Velocity scaling analysis
     double scaling_factor = calculateVelocityScalingFactor();
     std::cout << "\nVelocity Scaling Analysis:" << std::endl;
-    std::cout << "  Current VELOCITY_FACTOR: 1.0" << std::endl;
+    std::cout << "  Current RPM scaling factor: " << JD8Constants::RPM_SCALING_FACTOR << std::endl;
     std::cout << "  Calculated Scaling Factor: " << scaling_factor << std::endl;
     std::cout << "  Scaling Correction Needed: " << (std::abs(scaling_factor - 1.0) > 0.01 ? "YES" : "NO") << std::endl;
     

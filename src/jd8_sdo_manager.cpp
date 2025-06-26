@@ -189,19 +189,19 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadControlGains(const JD8ConfigParser
     // Upload position gains (0x2010)
     std::cout << "  Position gains: KP=" << gains.position_kp << ", KI=" << gains.position_ki << ", KD=" << gains.position_kd << std::endl;
     
-    result = uploadParameterFloat(POSITION_GAINS_INDEX, 1, gains.position_kp);
+    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 1, gains.position_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(POSITION_GAINS_INDEX, 2, gains.position_ki);
+    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 2, gains.position_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(POSITION_GAINS_INDEX, 3, gains.position_kd);
+    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 3, gains.position_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KD gain");
         return result;
@@ -210,19 +210,19 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadControlGains(const JD8ConfigParser
     // Upload velocity gains (0x2011)
     std::cout << "  Velocity gains: KP=" << gains.velocity_kp << ", KI=" << gains.velocity_ki << ", KD=" << gains.velocity_kd << std::endl;
     
-    result = uploadParameterFloat(VELOCITY_GAINS_INDEX, 1, gains.velocity_kp);
+    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 1, gains.velocity_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(VELOCITY_GAINS_INDEX, 2, gains.velocity_ki);
+    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 2, gains.velocity_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(VELOCITY_GAINS_INDEX, 3, gains.velocity_kd);
+    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 3, gains.velocity_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KD gain");
         return result;
@@ -231,19 +231,19 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadControlGains(const JD8ConfigParser
     // Upload current gains (0x2012)
     std::cout << "  Current gains: KP=" << gains.current_kp << ", KI=" << gains.current_ki << ", KD=" << gains.current_kd << std::endl;
     
-    result = uploadParameterFloat(CURRENT_GAINS_INDEX, 1, gains.current_kp);
+    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 1, gains.current_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(CURRENT_GAINS_INDEX, 2, gains.current_ki);
+    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 2, gains.current_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(CURRENT_GAINS_INDEX, 3, gains.current_kd);
+    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 3, gains.current_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KD gain");
         return result;
@@ -260,7 +260,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadMotorSpecs(const JD8ConfigParser::
     
     // Upload encoder resolution (0x2110,3)
     std::cout << "  Encoder resolution: " << specs.encoder_resolution << " counts/rev" << std::endl;
-    result = uploadParameter32(MOTOR_CONFIG_INDEX, 3, specs.encoder_resolution);
+    result = uploadParameter32(JD8Constants::MOTOR_CONFIG_INDEX, 3, specs.encoder_resolution);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload encoder resolution");
         return result;
@@ -268,7 +268,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadMotorSpecs(const JD8ConfigParser::
     
     // Upload velocity resolution (0x6081,0)
     std::cout << "  Velocity resolution: " << specs.velocity_resolution << std::endl;
-    result = uploadParameter32(CIA402_VELOCITY_RES_INDEX, 0, specs.velocity_resolution);
+    result = uploadParameter32(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0, specs.velocity_resolution);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity resolution");
         return result;
@@ -276,7 +276,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadMotorSpecs(const JD8ConfigParser::
     
     // Upload max speed (0x6080,0)
     std::cout << "  Max speed: " << specs.max_speed << std::endl;
-    result = uploadParameter32(CIA402_MAX_SPEED_INDEX, 0, specs.max_speed);
+    result = uploadParameter32(JD8Constants::CIA402_MAX_SPEED_INDEX, 0, specs.max_speed);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload max speed");
         return result;
@@ -294,13 +294,13 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadSafetyLimits(const JD8ConfigParser
     // Upload position limits (0x607D)
     std::cout << "  Position limits: " << limits.position_limit_min << " to " << limits.position_limit_max << std::endl;
     
-    result = uploadParameter32(CIA402_POSITION_LIMITS_INDEX, 1, static_cast<uint32_t>(limits.position_limit_min), SDODataType::INT32);
+    result = uploadParameter32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 1, static_cast<uint32_t>(limits.position_limit_min), SDODataType::INT32);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload minimum position limit");
         return result;
     }
     
-    result = uploadParameter32(CIA402_POSITION_LIMITS_INDEX, 2, static_cast<uint32_t>(limits.position_limit_max), SDODataType::INT32);
+    result = uploadParameter32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 2, static_cast<uint32_t>(limits.position_limit_max), SDODataType::INT32);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload maximum position limit");
         return result;
@@ -488,19 +488,19 @@ JD8SDOManager::SDOResult JD8SDOManager::performSDORead(uint16_t index, uint8_t s
 
 bool JD8SDOManager::validateParameter(uint16_t index, uint8_t subindex, double value) {
     // Validate gain parameters to prevent dangerous values
-    if (index == POSITION_GAINS_INDEX) {
+    if (index == JD8Constants::POSITION_GAINS_INDEX) {
         if (subindex == 1 && (value < 0 || value > MAX_POSITION_GAIN_KP)) return false;
         if (subindex == 2 && (value < 0 || value > MAX_POSITION_GAIN_KI)) return false;
         if (subindex == 3 && (value < 0 || value > 1000.0)) return false; // KD limit
     }
     
-    if (index == VELOCITY_GAINS_INDEX) {
+    if (index == JD8Constants::VELOCITY_GAINS_INDEX) {
         if (subindex == 1 && (value < 0 || value > MAX_VELOCITY_GAIN_KP)) return false;
         if (subindex == 2 && (value < 0 || value > MAX_VELOCITY_GAIN_KI)) return false;
         if (subindex == 3 && (value < 0 || value > 10.0)) return false; // KD limit
     }
     
-    if (index == CURRENT_GAINS_INDEX) {
+    if (index == JD8Constants::CURRENT_GAINS_INDEX) {
         if (subindex == 1 && (value < 0 || value > MAX_CURRENT_GAIN_KP)) return false;
         if (subindex == 2 && (value < 0 || value > MAX_CURRENT_GAIN_KI)) return false;
         if (subindex == 3 && (value < 0 || value > 1.0)) return false; // KD limit

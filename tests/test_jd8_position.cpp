@@ -18,16 +18,19 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    std::cout << "=== Position Control Test (Rate-Limit Safe) ===" << std::endl;
+    std::cout << "=== Position Control Test (90 Degree Output Shaft Move) ===" << std::endl;
     
-    int32_t start_pos = motor.get_actual_position_counts();
-    std::cout << "Starting position: " << start_pos << std::endl;
+    int32_t start_output_pos = motor.get_actual_output_shaft_position_counts();
+    int32_t start_motor_pos = motor.get_actual_position_counts();
+    std::cout << "Starting output shaft position: " << start_output_pos << std::endl;
+    std::cout << "Starting motor shaft position: " << start_motor_pos << std::endl;
     
-    // Use small, safe position moves with increased rate limits
-    int32_t target_offset = 50000;  // Should work with 10x increased limits
-    int32_t target_pos = start_pos + target_offset;
+    // Move output shaft by 90 degrees (1/4 revolution)
+    int32_t target_offset = jd8::JD8Constants::COUNTS_PER_REV / 4;  // 90 degrees = 131072 counts
+    int32_t target_pos = start_output_pos + target_offset;
     
-    std::cout << "Target position: " << target_pos << " (change: +" << target_offset << " counts)" << std::endl;
+    std::cout << "Target output shaft position: " << target_pos << " (change: +" << target_offset << " counts = 90 degrees)" << std::endl;
+    std::cout << "Expected motor shaft movement: " << (target_offset * 7.75) << " counts" << std::endl;
     
     motor.set_position_counts(target_pos);
     
@@ -38,13 +41,15 @@ int main(int argc, char* argv[]) {
         motor.update();
         
         if (i % 50 == 0) {
-            int32_t current_pos = motor.get_actual_position_counts();
-            int32_t error = target_pos - current_pos;
+            int32_t motor_shaft_pos = motor.get_actual_position_counts();
+            int32_t output_shaft_pos = motor.get_actual_output_shaft_position_counts();
+            int32_t output_error = target_pos - output_shaft_pos;
             
             std::cout << "Cycle " << i 
-                      << " | Position: " << current_pos 
+                      << " | Motor: " << motor_shaft_pos 
+                      << " | Output: " << output_shaft_pos
                       << " | Target: " << target_pos
-                      << " | Error: " << error << " counts" << std::endl;
+                      << " | Error: " << output_error << " counts" << std::endl;
         }
         
         // Sleep until next 4ms cycle boundary

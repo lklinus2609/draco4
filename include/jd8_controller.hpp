@@ -12,6 +12,9 @@
 
 #pragma once
 
+// Debug logging control - set to 0 for production builds
+#define JD8_DEBUG_LOGGING 1
+
 #include "jd8_pdo_structures.hpp"
 #include "jd8_configuration.hpp"
 #include "jd8_sdo_manager.hpp"
@@ -187,22 +190,28 @@ public:
     // === Feedback ===
     
     /**
-     * @brief Get actual velocity feedback (integer RPM)
-     * @return Current velocity in RPM
-     */
-    int get_actual_velocity_rpm() const;
-    
-    /**
-     * @brief Get actual velocity feedback with precise scaling
-     * @return Current velocity in RPM (double precision)
+     * @brief Get actual velocity feedback (motor shaft)
+     * @return Current motor shaft velocity in RPM (double precision)
      */
     double get_actual_velocity_rpm_precise() const;
     
     /**
-     * @brief Get actual position feedback
-     * @return Current position in encoder counts
+     * @brief Get actual output shaft velocity feedback
+     * @return Current output shaft velocity in RPM (accounts for 7.75:1 gear reduction)
+     */
+    double get_actual_output_shaft_rpm() const;
+    
+    /**
+     * @brief Get actual position feedback (motor shaft)
+     * @return Current motor shaft position in encoder counts
      */
     int32_t get_actual_position_counts() const;
+    
+    /**
+     * @brief Get actual output shaft position feedback
+     * @return Current output shaft position in encoder counts (accounts for 7.75:1 gear reduction)
+     */
+    int32_t get_actual_output_shaft_position_counts() const;
     
     /**
      * @brief Get actual torque feedback
@@ -301,17 +310,21 @@ private:
      */
     bool validate_torque_command(int16_t torque);
     
-    /**
-     * @brief Clamp torque to safe limits
-     * @param torque Input torque value
-     * @return Clamped torque value
-     */
-    int16_t clamp_torque_command(int16_t torque);
     
     /**
      * @brief Apply torque ramping for smooth control
      */
     void ramp_torque_command();
+    
+    /**
+     * @brief Apply position updates for continuous control
+     */
+    void update_position_command();
+    
+    /**
+     * @brief Apply velocity updates for continuous control
+     */
+    void update_velocity_command();
     
     /**
      * @brief Handle fault recovery by ramping torque to zero
@@ -346,6 +359,14 @@ private:
     int16_t current_torque_command_;   ///< Current ramped torque command (mNm)
     int16_t target_torque_command_;    ///< Target torque command (mNm)
     bool fault_recovery_active_;       ///< Fault recovery ramping active flag
+    
+    // Position control state
+    int32_t target_position_command_;  ///< Target position command (counts)
+    int32_t current_position_command_; ///< Current ramped position command (counts)
+    
+    // Velocity control state  
+    int target_velocity_command_;      ///< Target velocity command (RPM)
+    int current_velocity_command_;     ///< Current ramped velocity command (RPM)
     
     // Position control rate limiting
     int32_t last_position_command_;    ///< Last position command for rate limiting
