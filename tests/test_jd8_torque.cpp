@@ -96,6 +96,6 @@ int main(int argc, char* argv[]) {
     motor.disable_motor();
     motor.stop_operation();
     
-    std::cout << "✓ Torque control test completed!" << std::endl;
+    std::cout << "Torque control test completed!" << std::endl;
     return 0;
 }

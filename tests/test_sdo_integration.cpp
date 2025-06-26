@@ -28,9 +28,9 @@ void test_sdo_manager_creation() {
     assert(stats.uploads_successful == 0);
     assert(stats.uploads_failed == 0);
     
-    std::cout << "✓ SDO manager created successfully" << std::endl;
-    std::cout << "✓ Timeout and verification settings work" << std::endl;
-    std::cout << "✓ Statistics initialization correct" << std::endl;
+    std::cout << "SDO manager created successfully" << std::endl;
+    std::cout << "Timeout and verification settings work" << std::endl;
+    std::cout << "Statistics initialization correct" << std::endl;
 }
 
 void test_configuration_to_sdo_integration() {
@@ -61,7 +61,7 @@ void test_configuration_to_sdo_integration() {
     assert(control_gains.velocity_kp > 0 && control_gains.velocity_kp < 10);
     assert(control_gains.current_kp > 0 && control_gains.current_kp < 1);
     
-    std::cout << "✓ Configuration data is valid and ready for upload" << std::endl;
+    std::cout << "Configuration data is valid and ready for upload" << std::endl;
 }
 
 void test_parameter_validation() {
@@ -74,13 +74,13 @@ void test_parameter_validation() {
     assert(std::string(jd8::JD8SDOManager::resultToString(jd8::JD8SDOManager::SDOResult::TIMEOUT)) == "TIMEOUT");
     assert(std::string(jd8::JD8SDOManager::resultToString(jd8::JD8SDOManager::SDOResult::INVALID_PARAMETER)) == "INVALID_PARAMETER");
     
-    std::cout << "✓ SDO result enumeration working correctly" << std::endl;
+    std::cout << "SDO result enumeration working correctly" << std::endl;
     
     // Test error handling
     std::string initial_error = sdo_manager.getLastError();
     // Initially should be empty or have some default
     
-    std::cout << "✓ Error handling mechanism ready" << std::endl;
+    std::cout << "Error handling mechanism ready" << std::endl;
 }
 
 void test_controller_integration() {
@@ -95,13 +95,13 @@ void test_controller_integration() {
     assert(controller.has_configuration());
     assert(controller.get_configuration() != nullptr);
     
-    std::cout << "✓ Controller configuration loading works" << std::endl;
+    std::cout << "Controller configuration loading works" << std::endl;
     
     // Test SDO manager access (should be null until EtherCAT is operational)
     const auto* sdo_manager = controller.get_sdo_manager();
     assert(sdo_manager == nullptr);  // Should be null until upload is attempted
     
-    std::cout << "✓ SDO manager integration ready" << std::endl;
+    std::cout << "SDO manager integration ready" << std::endl;
     
     // Test configuration data access
     const auto* config = controller.get_configuration();
@@ -113,7 +113,7 @@ void test_controller_integration() {
     assert(std::abs(gains.velocity_kp - 0.2) < 0.01);
     assert(std::abs(gains.velocity_ki - 0.84) < 0.01);
     
-    std::cout << "✓ Your tuned motor gains are correctly loaded:" << std::endl;
+    std::cout << "Your tuned motor gains are correctly loaded:" << std::endl;
     std::cout << "    Position: KP=" << gains.position_kp << ", KI=" << gains.position_ki << std::endl;
     std::cout << "    Velocity: KP=" << gains.velocity_kp << ", KI=" << gains.velocity_ki << std::endl;
     std::cout << "    Current:  KP=" << gains.current_kp << ", KI=" << gains.current_ki << std::endl;
@@ -165,8 +165,8 @@ void test_upload_simulation() {
     std::cout << "  Position Max: " << limits.position_limit_max << std::endl;
     std::cout << "  Max Torque: " << limits.max_torque << std::endl;
     
-    std::cout << "\n✓ All parameters validated and ready for SDO upload" << std::endl;
-    std::cout << "✓ When connected to motor, these gains will be uploaded automatically" << std::endl;
+    std::cout << "\nAll parameters validated and ready for SDO upload" << std::endl;
+    std::cout << "When connected to motor, these gains will be uploaded automatically" << std::endl;
 }
 
 void demonstrate_expected_benefits() {
@@ -201,12 +201,12 @@ void demonstrate_expected_benefits() {
         std::cout << "  → Active integral gain = Fast current response" << std::endl;
     }
     
-    std::cout << "\n🎯 Expected Improvements:" << std::endl;
-    std::cout << "✓ Faster position settling time" << std::endl;
-    std::cout << "✓ Reduced following error" << std::endl;
-    std::cout << "✓ Better velocity tracking" << std::endl;
-    std::cout << "✓ Smoother motor operation" << std::endl;
-    std::cout << "✓ More precise positioning" << std::endl;
+    std::cout << "\nExpected Improvements:" << std::endl;
+    std::cout << "Faster position settling time" << std::endl;
+    std::cout << "Reduced following error" << std::endl;
+    std::cout << "Better velocity tracking" << std::endl;
+    std::cout << "Smoother motor operation" << std::endl;
+    std::cout << "More precise positioning" << std::endl;
 }
 
 int main() {
@@ -220,15 +220,15 @@ int main() {
         test_upload_simulation();
         demonstrate_expected_benefits();
         
-        std::cout << "\n🎉 ALL TESTS PASSED! 🎉" << std::endl;
+        std::cout << "\nALL TESTS PASSED! " << std::endl;
         std::cout << "\n=== Phase 2B Implementation Complete ===" << std::endl;
-        std::cout << "✅ SDO Manager: Ready for parameter upload" << std::endl;
-        std::cout << "✅ Configuration Integration: Working correctly" << std::endl;
-        std::cout << "✅ Control Gains: Loaded from your tuned config" << std::endl;
-        std::cout << "✅ Parameter Validation: Safety checks in place" << std::endl;
-        std::cout << "✅ Error Handling: Comprehensive error reporting" << std::endl;
+        std::cout << "SDO Manager: Ready for parameter upload" << std::endl;
+        std::cout << "Configuration Integration: Working correctly" << std::endl;
+        std::cout << "Control Gains: Loaded from your tuned config" << std::endl;
+        std::cout << "Parameter Validation: Safety checks in place" << std::endl;
+        std::cout << "Error Handling: Comprehensive error reporting" << std::endl;
         
-        std::cout << "\n🚀 Ready for Motor Connection!" << std::endl;
+        std::cout << "\nReady for Motor Connection!" << std::endl;
         std::cout << "When you connect to your motor and run:" << std::endl;
         std::cout << "  controller.load_configuration(\"config/JDLINK8_config_file.csv\");" << std::endl;
         std::cout << "  controller.upload_configuration();" << std::endl;

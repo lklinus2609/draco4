@@ -249,7 +249,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadControlGains(const JD8ConfigParser
         return result;
     }
     
-    std::cout << "✓ Control gains uploaded successfully" << std::endl;
+    std::cout << "Control gains uploaded successfully" << std::endl;
     return SDOResult::SUCCESS;
 }
 
@@ -282,7 +282,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadMotorSpecs(const JD8ConfigParser::
         return result;
     }
     
-    std::cout << "✓ Motor specifications uploaded successfully" << std::endl;
+    std::cout << "Motor specifications uploaded successfully" << std::endl;
     return SDOResult::SUCCESS;
 }
 
@@ -306,7 +306,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadSafetyLimits(const JD8ConfigParser
         return result;
     }
     
-    std::cout << "✓ Safety limits uploaded successfully" << std::endl;
+    std::cout << "Safety limits uploaded successfully" << std::endl;
     return SDOResult::SUCCESS;
 }
 
@@ -319,7 +319,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCompleteConfiguration(const JD8Con
     auto safety_limits = config.getSafetyLimits();
     result = uploadSafetyLimits(safety_limits);
     if (result != SDOResult::SUCCESS) {
-        std::cerr << "✗ Failed to upload safety limits: " << getLastError() << std::endl;
+        std::cerr << "Failed to upload safety limits: " << getLastError() << std::endl;
         return result;
     }
     
@@ -327,7 +327,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCompleteConfiguration(const JD8Con
     auto motor_specs = config.getMotorSpecs();
     result = uploadMotorSpecs(motor_specs);
     if (result != SDOResult::SUCCESS) {
-        std::cerr << "✗ Failed to upload motor specifications: " << getLastError() << std::endl;
+        std::cerr << "Failed to upload motor specifications: " << getLastError() << std::endl;
         return result;
     }
     
@@ -335,11 +335,11 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCompleteConfiguration(const JD8Con
     auto control_gains = config.getControlGains();
     result = uploadControlGains(control_gains);
     if (result != SDOResult::SUCCESS) {
-        std::cerr << "✗ Failed to upload control gains: " << getLastError() << std::endl;
+        std::cerr << "Failed to upload control gains: " << getLastError() << std::endl;
         return result;
     }
     
-    std::cout << "\n✓ Complete configuration uploaded successfully!" << std::endl;
+    std::cout << "\nComplete configuration uploaded successfully!" << std::endl;
     std::cout << "Motor is now configured with your tuned parameters." << std::endl;
     
     return SDOResult::SUCCESS;
@@ -366,7 +366,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCriticalParameters(const JD8Config
         return result;
     }
     
-    std::cout << "✓ Critical parameters uploaded successfully" << std::endl;
+    std::cout << "Critical parameters uploaded successfully" << std::endl;
     return SDOResult::SUCCESS;
 }
 
@@ -378,7 +378,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParametersByPriority(const JD8Conf
     auto safety_limits = config.getSafetyLimits();
     SDOResult result = uploadSafetyLimits(safety_limits);
     if (result != SDOResult::SUCCESS) {
-        std::cerr << "✗ CRITICAL: Safety limits upload failed - aborting" << std::endl;
+        std::cerr << "CRITICAL: Safety limits upload failed - aborting" << std::endl;
         return result;
     }
     
@@ -400,7 +400,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParametersByPriority(const JD8Conf
         // Not critical for basic operation
     }
     
-    std::cout << "✓ Parameter upload by priority completed" << std::endl;
+    std::cout << "Parameter upload by priority completed" << std::endl;
     return SDOResult::SUCCESS;
 }
 

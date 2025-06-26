@@ -51,12 +51,12 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    std::cout << "✓ New configuration uploaded successfully!" << std::endl;
+    std::cout << "New configuration uploaded successfully" << std::endl;
     
-    // Test 15 RPM
-    std::cout << "\nTesting 15 RPM..." << std::endl;
+    // Test 157.5 RPM
+    std::cout << "\nTesting 157.5 RPM..." << std::endl;
     int32_t start_pos = motor.get_actual_position_counts();
-    motor.set_velocity_rpm(15);
+    motor.set_velocity_rpm(157.5);
     
     // Start timing measurement
     auto start_time = std::chrono::steady_clock::now();
@@ -66,7 +66,7 @@ int main(int argc, char* argv[]) {
     // Precise 250Hz timing - sync with EtherCAT cycles
     auto next_cycle = std::chrono::steady_clock::now() + std::chrono::microseconds(4000);
     
-    for (int i = 0; i < 15000 && running; i++) { // 15000 cycles * 4ms = 60000ms = 60 seconds
+    for (int i = 0; i < 2500 && running; i++) { // 2500 cycles * 4ms = 10000ms = 10 seconds
         auto update_start = std::chrono::steady_clock::now();
         motor.update();
         auto update_end = std::chrono::steady_clock::now();
@@ -94,20 +94,20 @@ int main(int argc, char* argv[]) {
     double actual_rpm = jd8::JD8Constants::output_rpm_from_position_change(position_change, elapsed_ms / 1000.0);
     
     std::cout << "Results:" << std::endl;
-    std::cout << "  Expected duration: 60000ms" << std::endl;
+    std::cout << "  Expected duration: 10000ms" << std::endl;
     std::cout << "  Actual duration: " << elapsed_ms << "ms" << std::endl;
     std::cout << "  Timing accuracy: " << std::fixed << std::setprecision(1) 
-              << (100.0 * elapsed_ms / 60000.0) << "% of expected" << std::endl;
+              << (100.0 * elapsed_ms / 10000.0) << "% of expected" << std::endl;
     std::cout << "  motor.update() total time: " << std::fixed << std::setprecision(1) << total_update_time << "ms" << std::endl;
-    std::cout << "  motor.update() avg per cycle: " << std::fixed << std::setprecision(2) << (total_update_time / 15000.0) << "ms" << std::endl;
-    std::cout << "  sleep_until total time: " << std::fixed << std::setprecision(1) << (15000 * 4.0) << "ms" << std::endl;
-    std::cout << "  Overhead/other: " << std::fixed << std::setprecision(1) << (elapsed_ms - total_update_time - 60000.0) << "ms" << std::endl;
+    std::cout << "  motor.update() avg per cycle: " << std::fixed << std::setprecision(2) << (total_update_time / 2500.0) << "ms" << std::endl;
+    std::cout << "  sleep_until total time: " << std::fixed << std::setprecision(1) << (2500 * 4.0) << "ms" << std::endl;
+    std::cout << "  Overhead/other: " << std::fixed << std::setprecision(1) << (elapsed_ms - total_update_time - 10000.0) << "ms" << std::endl;
     std::cout << "  Position change: " << (end_pos - start_pos) << " counts" << std::endl;
     std::cout << "  Calculated RPM: " << std::fixed << std::setprecision(2) << actual_rpm << std::endl;
     std::cout << "  Velocity reading: " << std::fixed << std::setprecision(2) << motor.get_actual_velocity_rpm_precise() << " RPM" << std::endl;
     
-    if (std::abs(actual_rpm - 15.0) < 3.0) {
-        std::cout << "SUCCESS: Motor moving at correct speed!" << std::endl;
+    if (std::abs(actual_rpm - 157.5) < 10.0) {
+        std::cout << "SUCCESS: Motor moving at correct speed" << std::endl;
     }
     
     motor.set_velocity_rpm(0);

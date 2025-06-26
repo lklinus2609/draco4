@@ -123,7 +123,7 @@ bool JD8ConfigParser::parseCSV(const std::string& filename) {
     
     if (parsed_count > 0) {
         loaded_ = true;
-        std::cout << "✓ Parsed " << parsed_count << " parameters from " << filename << std::endl;
+        std::cout << "Parsed " << parsed_count << " parameters from " << filename << std::endl;
         
         // Print summary of key parameters
         printSummary();

@@ -35,11 +35,11 @@ bool JD8Controller::initialize(const std::string& interface_name) {
     std::cout << "Initializing EtherCAT master on " << interface_name_ << std::endl;
     
     if (ec_init(interface_name_.c_str())) {
-        std::cout << "✓ EtherCAT master initialized on " << interface_name_ << std::endl;
+        std::cout << "EtherCAT master initialized on " << interface_name_ << std::endl;
         initialized_ = true;
         return true;
     } else {
-        std::cerr << "✗ Failed to initialize EtherCAT master on " << interface_name_ << std::endl;
+        std::cerr << "Failed to initialize EtherCAT master on " << interface_name_ << std::endl;
         std::cerr << "  Try running with sudo" << std::endl;
         return false;
     }
@@ -47,7 +47,7 @@ bool JD8Controller::initialize(const std::string& interface_name) {
 
 bool JD8Controller::scan_network() {
     if (!initialized_) {
-        std::cerr << "✗ Master not initialized" << std::endl;
+        std::cerr << "Master not initialized" << std::endl;
         return false;
     }
     
@@ -56,7 +56,7 @@ bool JD8Controller::scan_network() {
     int slave_count = ec_config_init(FALSE);
     
     if (slave_count > 0) {
-        std::cout << "✓ Found " << ec_slavecount << " EtherCAT slaves:" << std::endl;
+        std::cout << "Found " << ec_slavecount << " EtherCAT slaves:" << std::endl;
         
         for (int i = 1; i <= ec_slavecount; i++) {
             std::cout << "  Slave " << i << ": " << ec_slave[i].name 
@@ -64,21 +64,21 @@ bool JD8Controller::scan_network() {
         }
         return true;
     } else {
-        std::cout << "✗ No slaves found on network" << std::endl;
+        std::cout << "No slaves found on network" << std::endl;
         return false;
     }
 }
 
 bool JD8Controller::configure_slaves() {
     if (ec_slavecount == 0) {
-        std::cerr << "✗ No slaves to configure" << std::endl;
+        std::cerr << "No slaves to configure" << std::endl;
         return false;
     }
     
     ec_config_map(&IOmap_);
     ec_configdc();
     
-    std::cout << "✓ Process data mapped - Output bytes: " << ec_slave[slave_index_].Obytes 
+    std::cout << "Process data mapped - Output bytes: " << ec_slave[slave_index_].Obytes 
               << ", Input bytes: " << ec_slave[slave_index_].Ibytes << std::endl;
     
     if (slave_index_ <= ec_slavecount) {
@@ -87,10 +87,10 @@ bool JD8Controller::configure_slaves() {
         
         std::memset(output_pdo_, 0, sizeof(OutputPDO));
         
-        std::cout << "✓ PDO mapping configured for slave " << slave_index_ << std::endl;
+        std::cout << "PDO mapping configured for slave " << slave_index_ << std::endl;
         return true;
     } else {
-        std::cerr << "✗ Invalid slave index: " << slave_index_ << std::endl;
+        std::cerr << "Invalid slave index: " << slave_index_ << std::endl;
         return false;
     }
 }
@@ -100,7 +100,7 @@ bool JD8Controller::start_operation() {
     ec_statecheck(0, EC_STATE_SAFE_OP, EC_TIMEOUTSTATE * 4);
     
     if (ec_slave[0].state != EC_STATE_SAFE_OP) {
-        std::cerr << "✗ Not all slaves reached SAFE_OP state" << std::endl;
+        std::cerr << "Not all slaves reached SAFE_OP state" << std::endl;
         return false;
     }
     
@@ -122,11 +122,11 @@ bool JD8Controller::start_operation() {
     } while (chk-- && (ec_slave[0].state != EC_STATE_OPERATIONAL));
     
     if (ec_slave[0].state == EC_STATE_OPERATIONAL) {
-        std::cout << "✓ Operational state reached for all slaves" << std::endl;
+        std::cout << "Operational state reached for all slaves" << std::endl;
         operational_ = true;
         return true;
     } else {
-        std::cerr << "✗ Not all slaves reached operational state" << std::endl;
+        std::cerr << "Not all slaves reached operational state" << std::endl;
         return false;
     }
 }
@@ -159,7 +159,7 @@ void JD8Controller::stop_operation() {
     if (initialized_) {
         ec_close();
         initialized_ = false;
-        std::cout << "✓ EtherCAT master shut down" << std::endl;
+        std::cout << "EtherCAT master shut down" << std::endl;
     }
 }
 
@@ -314,13 +314,13 @@ const char* JD8Controller::get_motor_state_string() const {
     
     if (statusword & JD8Constants::STATUSWORD_FAULT)
         return "FAULT";
-    if ((statusword & 0x006F) == 0x0027)
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_OPERATION_ENABLED_VALUE)
         return "OPERATION ENABLED";
-    if ((statusword & 0x006F) == JD8Constants::STATUSWORD_SWITCHED_ON)
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_SWITCHED_ON)
         return "SWITCHED ON";
-    if ((statusword & 0x006F) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON)
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON)
         return "READY TO SWITCH ON";
-    if ((statusword & 0x004F) == 0x0040)
+    if ((statusword & JD8Constants::STATUSWORD_SWITCH_DISABLED_MASK) == JD8Constants::STATUSWORD_SWITCH_ON_DISABLED_VALUE)
         return "SWITCH ON DISABLED";
     return "UNKNOWN";
 }
@@ -384,11 +384,11 @@ JD8Controller::MotorState JD8Controller::get_motor_state() const {
     
     if (statusword & JD8Constants::STATUSWORD_FAULT)
         return FAULT;
-    if ((statusword & 0x006F) == 0x0027)  // Operation enabled
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_OPERATION_ENABLED_VALUE)  // Operation enabled
         return OPERATION_ENABLED;
-    if ((statusword & 0x006F) == JD8Constants::STATUSWORD_SWITCHED_ON)
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_SWITCHED_ON)
         return SWITCHED_ON;
-    if ((statusword & 0x006F) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON)
+    if ((statusword & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON)
         return READY_TO_SWITCH_ON;
     
     return NOT_READY;
@@ -434,7 +434,7 @@ int JD8Controller::enable_motor_sequence() {
             
         case 1:
             output_pdo_->controlword = JD8Constants::CONTROLWORD_SHUTDOWN;
-            if ((status & 0x006F) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON) {
+            if ((status & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_READY_TO_SWITCH_ON) {
                 return 2;
             }
             return 1;
@@ -442,7 +442,7 @@ int JD8Controller::enable_motor_sequence() {
         case 2:
             output_pdo_->controlword = JD8Constants::CONTROLWORD_SWITCH_ON;
             output_pdo_->modes_of_operation = JD8Constants::VELOCITY_MODE;
-            if ((status & 0x006F) == JD8Constants::STATUSWORD_SWITCHED_ON) {
+            if ((status & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_SWITCHED_ON) {
                 return 3;
             }
             return 2;
@@ -451,7 +451,7 @@ int JD8Controller::enable_motor_sequence() {
             output_pdo_->controlword = JD8Constants::CONTROLWORD_ENABLE_OPERATION;
             output_pdo_->modes_of_operation = JD8Constants::VELOCITY_MODE;
             
-            if ((status & 0x006F) == 0x0027) {
+            if ((status & JD8Constants::STATUSWORD_STATE_MASK) == JD8Constants::STATUSWORD_OPERATION_ENABLED_VALUE) {
                 motor_enabled_ = true;
                 return 4;
             }
@@ -541,7 +541,7 @@ bool JD8Controller::load_configuration(const std::string& config_file) {
     bool loaded = config_parser_->parseCSV(config_file);
     
     if (!loaded) {
-        std::cerr << "✗ Failed to load configuration file" << std::endl;
+        std::cerr << "Failed to load configuration file" << std::endl;
         for (const auto& error : config_parser_->getErrors()) {
             std::cerr << "  - " << error << std::endl;
         }
@@ -553,7 +553,7 @@ bool JD8Controller::load_configuration(const std::string& config_file) {
     auto motor_specs = config_parser_->getMotorSpecs();
     auto control_gains = config_parser_->getControlGains();
     
-    std::cout << "✓ Configuration loaded successfully" << std::endl;
+    std::cout << "Configuration loaded successfully" << std::endl;
     std::cout << "  Parameters: " << config_parser_->getParameterCount() << std::endl;
     std::cout << "  Encoder Resolution: " << motor_specs.encoder_resolution << " counts/rev" << std::endl;
     std::cout << "  Velocity Resolution: " << motor_specs.velocity_resolution << std::endl;
@@ -568,7 +568,7 @@ bool JD8Controller::load_configuration(const std::string& config_file) {
                   "Velocity scaling mismatch: Config=" + std::to_string(config_scaling) + 
                   ", Code=" + std::to_string(code_scaling));
     } else {
-        std::cout << "✓ Velocity scaling factor verified: " << code_scaling << std::endl;
+        std::cout << "Velocity scaling factor verified: " << code_scaling << std::endl;
     }
     
     return true;
@@ -596,14 +596,14 @@ bool JD8Controller::upload_configuration() {
     // Create SDO manager if not already created
     if (!sdo_manager_) {
         sdo_manager_ = std::make_unique<JD8SDOManager>(slave_index_);
-        std::cout << "✓ SDO manager created for slave " << slave_index_ << std::endl;
+        std::cout << "SDO manager created for slave " << slave_index_ << std::endl;
     }
     
     // Upload complete configuration
     JD8SDOManager::SDOResult result = sdo_manager_->uploadCompleteConfiguration(*config_parser_);
     
     if (result == JD8SDOManager::SDOResult::SUCCESS) {
-        std::cout << "✓ Motor configuration uploaded successfully!" << std::endl;
+        std::cout << "Motor configuration uploaded successfully!" << std::endl;
         
         // Print upload statistics
         auto stats = sdo_manager_->getStatistics();
@@ -616,7 +616,7 @@ bool JD8Controller::upload_configuration() {
         
         return true;
     } else {
-        std::cerr << "✗ Configuration upload failed: " << sdo_manager_->getLastError() << std::endl;
+        std::cerr << "Configuration upload failed: " << sdo_manager_->getLastError() << std::endl;
         return false;
     }
 }
@@ -635,17 +635,17 @@ bool JD8Controller::upload_critical_parameters() {
     // Create SDO manager if not already created
     if (!sdo_manager_) {
         sdo_manager_ = std::make_unique<JD8SDOManager>(slave_index_);
-        std::cout << "✓ SDO manager created for slave " << slave_index_ << std::endl;
+        std::cout << "SDO manager created for slave " << slave_index_ << std::endl;
     }
     
     // Upload only critical parameters (faster, safer)
     JD8SDOManager::SDOResult result = sdo_manager_->uploadCriticalParameters(*config_parser_);
     
     if (result == JD8SDOManager::SDOResult::SUCCESS) {
-        std::cout << "✓ Critical parameters uploaded successfully!" << std::endl;
+        std::cout << "Critical parameters uploaded successfully!" << std::endl;
         return true;
     } else {
-        std::cerr << "✗ Critical parameter upload failed: " << sdo_manager_->getLastError() << std::endl;
+        std::cerr << "Critical parameter upload failed: " << sdo_manager_->getLastError() << std::endl;
         return false;
     }
 }

@@ -22,26 +22,26 @@ int main(int argc, char* argv[]) {
     std::cout << "=== JD8 Initialization Test ===" << std::endl;
     
     if (!controller.initialize(argv[1])) {
-        std::cerr << "✗ Failed to initialize" << std::endl;
+        std::cerr << "Failed to initialize" << std::endl;
         return 1;
     }
     
     if (!controller.scan_network()) {
-        std::cerr << "✗ Network scan failed" << std::endl;
+        std::cerr << "Network scan failed" << std::endl;
         return 1;
     }
     
     if (!controller.configure_slaves()) {
-        std::cerr << "✗ Configuration failed" << std::endl;
+        std::cerr << "Configuration failed" << std::endl;
         return 1;
     }
     
     if (!controller.start_operation()) {
-        std::cerr << "✗ Operation start failed" << std::endl;
+        std::cerr << "Operation start failed" << std::endl;
         return 1;
     }
     
-    std::cout << "✅ Initialization completed successfully!" << std::endl;
+    std::cout << "Initialization completed successfully!" << std::endl;
     controller.stop_operation();
     return 0;
 }

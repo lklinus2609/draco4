@@ -55,6 +55,6 @@ int main(int argc, char* argv[]) {
     motor.disable_motor();
     motor.stop_operation();
     
-    std::cout << "\n✓ Position control test completed!" << std::endl;
+    std::cout << "\nPosition control test completed!" << std::endl;
     return 0;
 }

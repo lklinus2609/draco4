@@ -84,7 +84,11 @@ public:
     static constexpr uint16_t CONTROLWORD_QUICK_STOP = 0x0002;         ///< Quick stop
     static constexpr uint16_t CONTROLWORD_FAULT_RESET = 0x0080;        ///< Fault reset
     
-    // === CIA402 Status Word Masks ===
+    // === CIA402 Status Word Masks and Values ===
+    static constexpr uint16_t STATUSWORD_STATE_MASK = 0x006F;         ///< State detection mask
+    static constexpr uint16_t STATUSWORD_SWITCH_DISABLED_MASK = 0x004F; ///< Switch disabled mask
+    static constexpr uint16_t STATUSWORD_OPERATION_ENABLED_VALUE = 0x0027; ///< Operation enabled state value
+    static constexpr uint16_t STATUSWORD_SWITCH_ON_DISABLED_VALUE = 0x0040; ///< Switch on disabled state value
     static constexpr uint16_t STATUSWORD_READY_TO_SWITCH_ON = 0x0021;  ///< Ready to switch on
     static constexpr uint16_t STATUSWORD_SWITCHED_ON = 0x0023;         ///< Switched on
     static constexpr uint16_t STATUSWORD_OPERATION_ENABLED = 0x0237;   ///< Operation enabled
