@@ -37,7 +37,7 @@ int main(int argc, char* argv[]) {
     // Precise 250Hz timing
     auto next_cycle = std::chrono::steady_clock::now() + std::chrono::microseconds(4000);
     
-    for (int i = 0; i < 750; i++) {
+    for (int i = 0; i < 400; i++) {
         motor.update();
         
         if (i % 50 == 0) {
