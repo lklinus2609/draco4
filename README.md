@@ -15,8 +15,26 @@ A C++ library for controlling JD8 servo motors via EtherCAT communication using 
 
 - CMake 3.16 or higher
 - C++17 compatible compiler (GCC, Clang)
-- SOEM library (system-installed)
+- SOEM library (Simple Open EtherCAT Master)
 - Root privileges for EtherCAT network access
+
+### Installing SOEM
+
+**Ubuntu/Debian:**
+```bash
+sudo apt update
+sudo apt install libsoem-dev
+```
+
+**From source:**
+```bash
+git clone https://github.com/OpenEtherCATsociety/SOEM.git
+cd SOEM
+mkdir build && cd build
+cmake ..
+make
+sudo make install
+```
 
 ## Building
 
@@ -73,30 +91,6 @@ Run with:
 sudo ./test_jd8_velocity eth0  # Replace with your interface
 ```
 
-## Project Structure
-
-```
-draco4/
-├── include/                   # Header files
-│   ├── jd8_controller.hpp     # Main motor controller interface
-│   ├── jd8_configuration.hpp  # Configuration file parser
-│   ├── jd8_sdo_manager.hpp    # SDO communication manager
-│   └── jd8_pdo_structures.hpp # EtherCAT PDO data structures
-├── src/                       # Implementation files
-│   ├── jd8_controller.cpp     # Motor controller implementation
-│   ├── jd8_configuration.cpp  # Configuration parsing
-│   └── jd8_sdo_manager.cpp    # SDO operations
-├── tests/                     # Test programs
-│   ├── test_jd8_velocity.cpp  # Velocity control test
-│   ├── test_jd8_position.cpp  # Position control test
-│   ├── test_jd8_torque.cpp    # Torque control test
-│   └── test_sdo_integration.cpp # SDO integration test
-├── config/                    # Motor configuration files
-│   └── JDLINK8_config_file.csv
-├── legacy/                    # Legacy C reference implementation
-└── CMakeLists.txt
-```
-
 ## Key Functions
 
 ### Motor Control
@@ -129,31 +123,6 @@ draco4/
 - **Motor Safety**: The library includes safety limits for torque and position changes
 - **Emergency Stop**: Use `emergency_stop()` method for immediate motion halt
 - **Real-time Timing**: Maintain 4ms (250Hz) update cycles for optimal performance
-
-## Configuration and Customization
-
-### Update Rate Configuration
-
-The codebase is designed to be flexible and can be updated to run at different frequencies:
-
-- **Current Default**: 250Hz (4ms cycle time)
-- **Configurable Range**: 100Hz to 1000Hz (10ms to 1ms cycle time)
-- **Modification Required**: Update `std::chrono::microseconds(4000)` in update loops to desired interval
-- **Performance Note**: Higher frequencies provide better control responsiveness but require more CPU resources
-
-Example for different frequencies:
-```cpp
-// 1000Hz (1ms) - High performance
-std::this_thread::sleep_for(std::chrono::microseconds(1000));
-
-// 500Hz (2ms) - Balanced performance  
-std::this_thread::sleep_for(std::chrono::microseconds(2000));
-
-// 100Hz (10ms) - Lower CPU usage
-std::this_thread::sleep_for(std::chrono::microseconds(10000));
-```
-
-Ensure your system can maintain real-time performance at the chosen frequency.
 
 ## Contributing
 
