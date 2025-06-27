@@ -130,6 +130,31 @@ draco4/
 - **Emergency Stop**: Use `emergency_stop()` method for immediate motion halt
 - **Real-time Timing**: Maintain 4ms (250Hz) update cycles for optimal performance
 
+## Configuration and Customization
+
+### Update Rate Configuration
+
+The codebase is designed to be flexible and can be updated to run at different frequencies:
+
+- **Current Default**: 250Hz (4ms cycle time)
+- **Configurable Range**: 100Hz to 1000Hz (10ms to 1ms cycle time)
+- **Modification Required**: Update `std::chrono::microseconds(4000)` in update loops to desired interval
+- **Performance Note**: Higher frequencies provide better control responsiveness but require more CPU resources
+
+Example for different frequencies:
+```cpp
+// 1000Hz (1ms) - High performance
+std::this_thread::sleep_for(std::chrono::microseconds(1000));
+
+// 500Hz (2ms) - Balanced performance  
+std::this_thread::sleep_for(std::chrono::microseconds(2000));
+
+// 100Hz (10ms) - Lower CPU usage
+std::this_thread::sleep_for(std::chrono::microseconds(10000));
+```
+
+Ensure your system can maintain real-time performance at the chosen frequency.
+
 ## Contributing
 
 This is a motor control project focused on industrial automation. Please ensure any contributions maintain safety and real-time performance requirements.
