@@ -73,7 +73,7 @@ public:
      * @param data_type Data type specification
      * @return SDO operation result
      */
-    SDOResult uploadParameter32(uint16_t index, uint8_t subindex, uint32_t value, SDODataType data_type = SDODataType::UINT32);
+    SDOResult upload32(uint16_t index, uint8_t subindex, uint32_t value, SDODataType data_type = SDODataType::UINT32);
     
     /**
      * @brief Upload floating-point parameter to motor drive
@@ -82,7 +82,7 @@ public:
      * @param value Parameter value to upload
      * @return SDO operation result
      */
-    SDOResult uploadParameterFloat(uint16_t index, uint8_t subindex, double value);
+    SDOResult uploadFloat(uint16_t index, uint8_t subindex, double value);
     
     /**
      * @brief Download parameter from motor drive
@@ -92,7 +92,7 @@ public:
      * @param data_type Data type specification
      * @return SDO operation result
      */
-    SDOResult downloadParameter32(uint16_t index, uint8_t subindex, uint32_t& value, SDODataType data_type = SDODataType::UINT32);
+    SDOResult download32(uint16_t index, uint8_t subindex, uint32_t& value, SDODataType data_type = SDODataType::UINT32);
     
     /**
      * @brief Download floating-point parameter from motor drive
@@ -101,7 +101,7 @@ public:
      * @param value Reference to store downloaded value
      * @return SDO operation result
      */
-    SDOResult downloadParameterFloat(uint16_t index, uint8_t subindex, double& value);
+    SDOResult downloadFloat(uint16_t index, uint8_t subindex, double& value);
     
     /**
      * @brief Verify uploaded parameter by reading it back
@@ -111,8 +111,8 @@ public:
      * @param tolerance Tolerance for floating-point comparison
      * @return true if verification successful
      */
-    bool verifyParameter32(uint16_t index, uint8_t subindex, uint32_t expected_value);
-    bool verifyParameterFloat(uint16_t index, uint8_t subindex, double expected_value, double tolerance = 0.001);
+    bool verify32(uint16_t index, uint8_t subindex, uint32_t expected_value);
+    bool verifyFloat(uint16_t index, uint8_t subindex, double expected_value, double tolerance = 0.001);
     
     // === High-Level Configuration Upload ===
     
@@ -142,7 +142,7 @@ public:
      * @param config Configuration parser with loaded parameters
      * @return SDO operation result
      */
-    SDOResult uploadCompleteConfiguration(const JD8ConfigParser& config);
+    SDOResult uploadComplete(const JD8ConfigParser& config);
     
     // === Batch Operations ===
     
@@ -158,7 +158,7 @@ public:
      * @param config Configuration parser
      * @return SDO operation result
      */
-    SDOResult uploadParametersByPriority(const JD8ConfigParser& config);
+    SDOResult uploadParamByPriority(const JD8ConfigParser& config);
     
     // === Utility Functions ===
     

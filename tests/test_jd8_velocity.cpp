@@ -1,6 +1,6 @@
 /**
- * @file test_simple_velocity.cpp
- * @brief Simple test for corrected velocity scaling
+ * @file test_jd8_velocity.cpp
+ * @brief JD8 velocity scaling test
  */
 
 #include "jd8_controller.hpp"
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signal_handler);
     std::string interface_name = argv[1];
     
-    std::cout << "=== SIMPLE VELOCITY TEST ===" << std::endl;
+    std::cout << "=== JD8 VELOCITY TEST ===" << std::endl;
     std::cout << "Testing corrected velocity scaling" << std::endl;
     
     jd8::JD8Controller motor;
@@ -40,13 +40,13 @@ int main(int argc, char* argv[]) {
     
     // Load and upload new configuration
     std::cout << "\nLoading new motor configuration..." << std::endl;
-    if (!motor.load_configuration("../config/JDLINK8_config_file.csv")) {
+    if (!motor.loadConfig("../config/JDLINK8_config_file.csv")) {
         std::cerr << "Failed to load configuration file" << std::endl;
         return 1;
     }
     
     std::cout << "Uploading configuration to motor..." << std::endl;
-    if (!motor.upload_configuration()) {
+    if (!motor.uploadConfig()) {
         std::cerr << "Failed to upload configuration to motor" << std::endl;
         return 1;
     }
@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     
     // Test 157.5 RPM (rounded to 158 for integer input)
     std::cout << "\nTesting 158 RPM (target was 157.5)..." << std::endl;
-    int32_t start_pos = motor.get_actual_position_counts();
+    int32_t start_pos = motor.getPosition();
     motor.set_velocity_rpm(158);
     
     // Start timing measurement
@@ -74,8 +74,8 @@ int main(int argc, char* argv[]) {
         total_update_time += std::chrono::duration_cast<std::chrono::microseconds>(update_end - update_start).count() / 1000.0;
         
         if (i % 250 == 0) { // Every 250 cycles = 1000ms at 250Hz
-            int32_t current_pos = motor.get_actual_position_counts();
-            double current_vel = motor.get_actual_velocity_rpm_precise();
+            int32_t current_pos = motor.getPosition();
+            double current_vel = motor.getMotorRPM();
             std::cout << "t=" << (i * 4) << "ms: " << current_vel << " RPM, pos=" 
                       << current_pos << " (change: " << (current_pos - start_pos) << ")" << std::endl;
         }
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
     auto end_time = std::chrono::steady_clock::now();
     auto elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(end_time - start_time).count();
     
-    int32_t end_pos = motor.get_actual_position_counts();
+    int32_t end_pos = motor.getPosition();
     int32_t position_change = end_pos - start_pos;
     double actual_rpm = jd8::JD8Constants::output_rpm_from_position_change(position_change, elapsed_ms / 1000.0);
     
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
     std::cout << "  Overhead/other: " << std::fixed << std::setprecision(1) << (elapsed_ms - total_update_time - 10000.0) << "ms" << std::endl;
     std::cout << "  Position change: " << (end_pos - start_pos) << " counts" << std::endl;
     std::cout << "  Calculated RPM: " << std::fixed << std::setprecision(2) << actual_rpm << std::endl;
-    std::cout << "  Velocity reading: " << std::fixed << std::setprecision(2) << motor.get_actual_velocity_rpm_precise() << " RPM" << std::endl;
+    std::cout << "  Velocity reading: " << std::fixed << std::setprecision(2) << motor.getMotorRPM() << " RPM" << std::endl;
     
     if (std::abs(actual_rpm - 157.5) < 10.0) {
         std::cout << "SUCCESS: Motor moving at correct speed" << std::endl;

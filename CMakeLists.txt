@@ -79,10 +79,10 @@ endif()
 
 
 
-# Simple velocity test
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_simple_velocity.cpp)
-    add_executable(test_simple_velocity tests/test_simple_velocity.cpp)
-    target_link_libraries(test_simple_velocity draco4_ethercat)
+# JD8 velocity test
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_jd8_velocity.cpp)
+    add_executable(test_jd8_velocity tests/test_jd8_velocity.cpp)
+    target_link_libraries(test_jd8_velocity draco4_ethercat)
 endif()
 
 

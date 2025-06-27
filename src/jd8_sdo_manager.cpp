@@ -25,7 +25,7 @@ JD8SDOManager::~JD8SDOManager() {
 
 // === Core SDO Operations ===
 
-JD8SDOManager::SDOResult JD8SDOManager::uploadParameter32(uint16_t index, uint8_t subindex, uint32_t value, SDODataType data_type) {
+JD8SDOManager::SDOResult JD8SDOManager::upload32(uint16_t index, uint8_t subindex, uint32_t value, SDODataType data_type) {
     auto start_time = std::chrono::steady_clock::now();
     
     statistics_.uploads_attempted++;
@@ -59,7 +59,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParameter32(uint16_t index, uint8_
         // Verify parameter if enabled
         if (verification_enabled_) {
             statistics_.verifications_attempted++;
-            if (verifyParameter32(index, subindex, value)) {
+            if (verify32(index, subindex, value)) {
                 statistics_.verifications_successful++;
             } else {
                 result = SDOResult::VERIFICATION_FAILED;
@@ -73,7 +73,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParameter32(uint16_t index, uint8_
     return result;
 }
 
-JD8SDOManager::SDOResult JD8SDOManager::uploadParameterFloat(uint16_t index, uint8_t subindex, double value) {
+JD8SDOManager::SDOResult JD8SDOManager::uploadFloat(uint16_t index, uint8_t subindex, double value) {
     auto start_time = std::chrono::steady_clock::now();
     
     statistics_.uploads_attempted++;
@@ -107,7 +107,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParameterFloat(uint16_t index, uin
         // Verify parameter if enabled
         if (verification_enabled_) {
             statistics_.verifications_attempted++;
-            if (verifyParameterFloat(index, subindex, value)) {
+            if (verifyFloat(index, subindex, value)) {
                 statistics_.verifications_successful++;
             } else {
                 result = SDOResult::VERIFICATION_FAILED;
@@ -121,7 +121,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadParameterFloat(uint16_t index, uin
     return result;
 }
 
-JD8SDOManager::SDOResult JD8SDOManager::downloadParameter32(uint16_t index, uint8_t subindex, uint32_t& value, SDODataType data_type) {
+JD8SDOManager::SDOResult JD8SDOManager::download32(uint16_t index, uint8_t subindex, uint32_t& value, SDODataType data_type) {
     uint8_t data_size = static_cast<uint8_t>(data_type);
     SDOResult result = performSDORead(index, subindex, &value, data_size);
     
@@ -129,7 +129,7 @@ JD8SDOManager::SDOResult JD8SDOManager::downloadParameter32(uint16_t index, uint
     return result;
 }
 
-JD8SDOManager::SDOResult JD8SDOManager::downloadParameterFloat(uint16_t index, uint8_t subindex, double& value) {
+JD8SDOManager::SDOResult JD8SDOManager::downloadFloat(uint16_t index, uint8_t subindex, double& value) {
     uint32_t motor_value;
     SDOResult result = performSDORead(index, subindex, &motor_value, 4);
     
@@ -141,9 +141,9 @@ JD8SDOManager::SDOResult JD8SDOManager::downloadParameterFloat(uint16_t index, u
     return result;
 }
 
-bool JD8SDOManager::verifyParameter32(uint16_t index, uint8_t subindex, uint32_t expected_value) {
+bool JD8SDOManager::verify32(uint16_t index, uint8_t subindex, uint32_t expected_value) {
     uint32_t read_value;
-    SDOResult result = downloadParameter32(index, subindex, read_value);
+    SDOResult result = download32(index, subindex, read_value);
     
     if (result != SDOResult::SUCCESS) {
         setLastError("Verification failed: Could not read parameter 0x" + 
@@ -160,9 +160,9 @@ bool JD8SDOManager::verifyParameter32(uint16_t index, uint8_t subindex, uint32_t
     return true;
 }
 
-bool JD8SDOManager::verifyParameterFloat(uint16_t index, uint8_t subindex, double expected_value, double tolerance) {
+bool JD8SDOManager::verifyFloat(uint16_t index, uint8_t subindex, double expected_value, double tolerance) {
     double read_value;
-    SDOResult result = downloadParameterFloat(index, subindex, read_value);
+    SDOResult result = downloadFloat(index, subindex, read_value);
     
     if (result != SDOResult::SUCCESS) {
         setLastError("Verification failed: Could not read parameter 0x" + 
@@ -182,136 +182,136 @@ bool JD8SDOManager::verifyParameterFloat(uint16_t index, uint8_t subindex, doubl
 // === High-Level Configuration Upload ===
 
 JD8SDOManager::SDOResult JD8SDOManager::uploadControlGains(const JD8ConfigParser::ControlGains& gains) {
-    std::cout << "Uploading control gains..." << std::endl;
+    // Upload control gains silently
     
     SDOResult result;
     
     // Upload position gains (0x2010)
-    std::cout << "  Position gains: KP=" << gains.position_kp << ", KI=" << gains.position_ki << ", KD=" << gains.position_kd << std::endl;
+    // Position gains: KP, KI, KD
     
-    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 1, gains.position_kp);
+    result = uploadFloat(JD8Constants::POSITION_GAINS_INDEX, 1, gains.position_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 2, gains.position_ki);
+    result = uploadFloat(JD8Constants::POSITION_GAINS_INDEX, 2, gains.position_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::POSITION_GAINS_INDEX, 3, gains.position_kd);
+    result = uploadFloat(JD8Constants::POSITION_GAINS_INDEX, 3, gains.position_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload position KD gain");
         return result;
     }
     
     // Upload velocity gains (0x2011)
-    std::cout << "  Velocity gains: KP=" << gains.velocity_kp << ", KI=" << gains.velocity_ki << ", KD=" << gains.velocity_kd << std::endl;
+    // Velocity gains: KP, KI, KD
     
-    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 1, gains.velocity_kp);
+    result = uploadFloat(JD8Constants::VELOCITY_GAINS_INDEX, 1, gains.velocity_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 2, gains.velocity_ki);
+    result = uploadFloat(JD8Constants::VELOCITY_GAINS_INDEX, 2, gains.velocity_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::VELOCITY_GAINS_INDEX, 3, gains.velocity_kd);
+    result = uploadFloat(JD8Constants::VELOCITY_GAINS_INDEX, 3, gains.velocity_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity KD gain");
         return result;
     }
     
     // Upload current gains (0x2012)
-    std::cout << "  Current gains: KP=" << gains.current_kp << ", KI=" << gains.current_ki << ", KD=" << gains.current_kd << std::endl;
+    // Current gains: KP, KI, KD
     
-    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 1, gains.current_kp);
+    result = uploadFloat(JD8Constants::CURRENT_GAINS_INDEX, 1, gains.current_kp);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KP gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 2, gains.current_ki);
+    result = uploadFloat(JD8Constants::CURRENT_GAINS_INDEX, 2, gains.current_ki);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KI gain");
         return result;
     }
     
-    result = uploadParameterFloat(JD8Constants::CURRENT_GAINS_INDEX, 3, gains.current_kd);
+    result = uploadFloat(JD8Constants::CURRENT_GAINS_INDEX, 3, gains.current_kd);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload current KD gain");
         return result;
     }
     
-    std::cout << "Control gains uploaded successfully" << std::endl;
+    // Control gains uploaded successfully
     return SDOResult::SUCCESS;
 }
 
 JD8SDOManager::SDOResult JD8SDOManager::uploadMotorSpecs(const JD8ConfigParser::MotorSpecs& specs) {
-    std::cout << "Uploading motor specifications..." << std::endl;
+    // Upload motor specifications silently
     
     SDOResult result;
     
     // Upload encoder resolution (0x2110,3)
-    std::cout << "  Encoder resolution: " << specs.encoder_resolution << " counts/rev" << std::endl;
-    result = uploadParameter32(JD8Constants::MOTOR_CONFIG_INDEX, 3, specs.encoder_resolution);
+    // Encoder resolution: specs.encoder_resolution
+    result = upload32(JD8Constants::MOTOR_CONFIG_INDEX, 3, specs.encoder_resolution);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload encoder resolution");
         return result;
     }
     
     // Upload velocity resolution (0x6081,0)
-    std::cout << "  Velocity resolution: " << specs.velocity_resolution << std::endl;
-    result = uploadParameter32(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0, specs.velocity_resolution);
+    // Velocity resolution: specs.velocity_resolution
+    result = upload32(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0, specs.velocity_resolution);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload velocity resolution");
         return result;
     }
     
     // Upload max speed (0x6080,0)
-    std::cout << "  Max speed: " << specs.max_speed << std::endl;
-    result = uploadParameter32(JD8Constants::CIA402_MAX_SPEED_INDEX, 0, specs.max_speed);
+    // Max speed: specs.max_speed
+    result = upload32(JD8Constants::CIA402_MAX_SPEED_INDEX, 0, specs.max_speed);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload max speed");
         return result;
     }
     
-    std::cout << "Motor specifications uploaded successfully" << std::endl;
+    // Motor specifications uploaded successfully
     return SDOResult::SUCCESS;
 }
 
 JD8SDOManager::SDOResult JD8SDOManager::uploadSafetyLimits(const JD8ConfigParser::SafetyLimits& limits) {
-    std::cout << "Uploading safety limits..." << std::endl;
+    // Upload safety limits silently
     
     SDOResult result;
     
     // Upload position limits (0x607D)
-    std::cout << "  Position limits: " << limits.position_limit_min << " to " << limits.position_limit_max << std::endl;
+    // Position limits: min to max
     
-    result = uploadParameter32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 1, static_cast<uint32_t>(limits.position_limit_min), SDODataType::INT32);
+    result = upload32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 1, static_cast<uint32_t>(limits.position_limit_min), SDODataType::INT32);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload minimum position limit");
         return result;
     }
     
-    result = uploadParameter32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 2, static_cast<uint32_t>(limits.position_limit_max), SDODataType::INT32);
+    result = upload32(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 2, static_cast<uint32_t>(limits.position_limit_max), SDODataType::INT32);
     if (result != SDOResult::SUCCESS) {
         setLastError("Failed to upload maximum position limit");
         return result;
     }
     
-    std::cout << "Safety limits uploaded successfully" << std::endl;
+    // Safety limits uploaded successfully
     return SDOResult::SUCCESS;
 }
 
-JD8SDOManager::SDOResult JD8SDOManager::uploadCompleteConfiguration(const JD8ConfigParser& config) {
-    std::cout << "\n=== Uploading Complete Configuration ===" << std::endl;
+JD8SDOManager::SDOResult JD8SDOManager::uploadComplete(const JD8ConfigParser& config) {
+    // Upload complete configuration silently, only report failures
     
     SDOResult result;
     
@@ -339,7 +339,7 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCompleteConfiguration(const JD8Con
         return result;
     }
     
-    std::cout << "\nComplete configuration uploaded successfully!" << std::endl;
+    std::cout << "Configuration uploaded successfully" << std::endl;
     std::cout << "Motor is now configured with your tuned parameters." << std::endl;
     
     return SDOResult::SUCCESS;
@@ -366,11 +366,11 @@ JD8SDOManager::SDOResult JD8SDOManager::uploadCriticalParameters(const JD8Config
         return result;
     }
     
-    std::cout << "Critical parameters uploaded successfully" << std::endl;
+    // Critical parameters uploaded successfully
     return SDOResult::SUCCESS;
 }
 
-JD8SDOManager::SDOResult JD8SDOManager::uploadParametersByPriority(const JD8ConfigParser& config) {
+JD8SDOManager::SDOResult JD8SDOManager::uploadParamByPriority(const JD8ConfigParser& config) {
     std::cout << "\n=== Uploading Parameters by Priority ===" << std::endl;
     
     // Priority 1: Safety limits (must succeed)
@@ -511,8 +511,7 @@ bool JD8SDOManager::validateParameter(uint16_t index, uint8_t subindex, double v
 }
 
 void JD8SDOManager::logSDOOperation(const std::string& operation, uint16_t index, uint8_t subindex, SDOResult result) {
-    std::cout << "[SDO] " << operation << " 0x" << std::hex << std::setfill('0') << std::setw(4) << index 
-              << "," << std::dec << static_cast<int>(subindex) << " -> " << resultToString(result) << std::endl;
+    // SDO logging disabled for cleaner output
 }
 
 void JD8SDOManager::setLastError(const std::string& error) {

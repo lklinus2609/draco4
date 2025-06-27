@@ -13,7 +13,7 @@
 #pragma once
 
 // Debug logging control - set to 0 for production builds
-#define JD8_DEBUG_LOGGING 1
+#define JD8_DEBUG_LOGGING 0
 
 #include "jd8_pdo_structures.hpp"
 #include "jd8_configuration.hpp"
@@ -112,37 +112,37 @@ public:
      * @param config_file Path to configuration CSV file
      * @return true if configuration loaded successfully
      */
-    bool load_configuration(const std::string& config_file);
+    bool loadConfig(const std::string& config_file);
     
     /**
      * @brief Get current configuration parser
      * @return Pointer to configuration parser, nullptr if not loaded
      */
-    const JD8ConfigParser* get_configuration() const;
+    const JD8ConfigParser* getConfig() const;
     
     /**
      * @brief Check if configuration is loaded
      * @return true if configuration is available
      */
-    bool has_configuration() const;
+    bool hasConfig() const;
     
     /**
      * @brief Upload configuration parameters to motor via SDO
      * @return true if upload successful
      */
-    bool upload_configuration();
+    bool uploadConfig();
     
     /**
      * @brief Upload only critical parameters (gains + safety limits)
      * @return true if upload successful
      */
-    bool upload_critical_parameters();
+    bool uploadCriticalParam();
     
     /**
      * @brief Get SDO manager for advanced operations
      * @return Pointer to SDO manager, nullptr if not available
      */
-    const JD8SDOManager* get_sdo_manager() const;
+    const JD8SDOManager* getSDO() const;
     
     // === Motor Control ===
     
@@ -193,37 +193,37 @@ public:
      * @brief Get actual velocity feedback (motor shaft)
      * @return Current motor shaft velocity in RPM (double precision)
      */
-    double get_actual_velocity_rpm_precise() const;
+    double getMotorRPM() const;
     
     /**
      * @brief Get actual output shaft velocity feedback
      * @return Current output shaft velocity in RPM (accounts for 7.75:1 gear reduction)
      */
-    double get_actual_output_shaft_rpm() const;
+    double getOutputRPM() const;
     
     /**
      * @brief Get actual position feedback (motor shaft)
      * @return Current motor shaft position in encoder counts
      */
-    int32_t get_actual_position_counts() const;
+    int32_t getPosition() const;
     
     /**
      * @brief Get actual output shaft position feedback
      * @return Current output shaft position in encoder counts (accounts for 7.75:1 gear reduction)
      */
-    int32_t get_actual_output_shaft_position_counts() const;
+    int32_t getOutputPos() const;
     
     /**
      * @brief Get actual torque feedback
      * @return Current torque in mNm
      */
-    int16_t get_actual_torque_millinm() const;
+    int16_t getTorque() const;
     
     /**
      * @brief Get raw status word from motor
      * @return CIA402 status word
      */
-    uint16_t get_status_word() const;
+    uint16_t getStatus() const;
     
     // === State and Diagnostics ===
     
@@ -237,7 +237,7 @@ public:
      * @brief Get human-readable motor state string
      * @return String description of current state
      */
-    const char* get_motor_state_string() const;
+    const char* getStateStr() const;
     
     /**
      * @brief Check if motor has fault condition

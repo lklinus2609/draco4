@@ -202,7 +202,7 @@ bool JD8Controller::enable_motor() {
         
         if (i % 100 == 0 && input_pdo_) {
             std::cout << "Enable cycle " << i << ": Status=0x" << std::hex << input_pdo_->statusword 
-                      << ", State=" << get_motor_state_string() << std::dec << std::endl;
+                      << ", State=" << getStateStr() << std::dec << std::endl;
         }
         
         // Sleep until next 4ms cycle boundary
@@ -248,7 +248,7 @@ bool JD8Controller::set_velocity_rpm(int rpm) {
     
     if (current_mode_ != VELOCITY_MODE && output_pdo_) {
         // Clear position commands when switching to velocity mode
-        target_position_command_ = get_actual_position_counts();
+        target_position_command_ = getPosition();
         current_position_command_ = target_position_command_;
         output_pdo_->target_position = static_cast<uint32_t>(target_position_command_);
         
@@ -292,7 +292,7 @@ bool JD8Controller::set_position_counts(int32_t position) {
         output_pdo_->modes_of_operation = JD8Constants::POSITION_MODE;
         output_pdo_->controlword = JD8Constants::CONTROLWORD_POSITION_MODE;
         current_mode_ = POSITION_MODE;
-        current_position_command_ = get_actual_position_counts();  // This is already motor shaft position
+        current_position_command_ = getPosition();  // This is already motor shaft position
         
         std::cout << "Mode switched to POSITION_MODE, velocity commands cleared" << std::endl;
     }
@@ -319,7 +319,7 @@ bool JD8Controller::set_torque_millinm(int16_t torque) {
         current_velocity_command_ = 0;
         output_pdo_->target_velocity = 0;
         
-        target_position_command_ = get_actual_position_counts();
+        target_position_command_ = getPosition();
         current_position_command_ = target_position_command_;
         output_pdo_->target_position = static_cast<uint32_t>(target_position_command_);
         
@@ -334,7 +334,7 @@ bool JD8Controller::set_torque_millinm(int16_t torque) {
     return true;
 }
 
-const char* JD8Controller::get_motor_state_string() const {
+const char* JD8Controller::getStateStr() const {
     if (!input_pdo_) return "NO_DATA";
     
     uint16_t statusword = input_pdo_->statusword;
@@ -352,7 +352,7 @@ const char* JD8Controller::get_motor_state_string() const {
     return "UNKNOWN";
 }
 
-double JD8Controller::get_actual_velocity_rpm_precise() const {
+double JD8Controller::getMotorRPM() const {
     if (input_pdo_) {
         // Calculate and log all scaling steps
         uint32_t raw_pdo = input_pdo_->velocity_actual;
@@ -375,7 +375,7 @@ double JD8Controller::get_actual_velocity_rpm_precise() const {
     return 0.0;
 }
 
-double JD8Controller::get_actual_output_shaft_rpm() const {
+double JD8Controller::getOutputRPM() const {
     if (input_pdo_) {
         uint32_t raw_pdo = input_pdo_->velocity_actual;
         int32_t signed_pdo = static_cast<int32_t>(raw_pdo);
@@ -385,14 +385,14 @@ double JD8Controller::get_actual_output_shaft_rpm() const {
     return 0.0;
 }
 
-int32_t JD8Controller::get_actual_position_counts() const {
+int32_t JD8Controller::getPosition() const {
     if (input_pdo_) {
         return input_pdo_->position_actual;  // Returns motor shaft position
     }
     return 0;
 }
 
-int32_t JD8Controller::get_actual_output_shaft_position_counts() const {
+int32_t JD8Controller::getOutputPos() const {
     if (input_pdo_) {
         int32_t motor_shaft_position = input_pdo_->position_actual;
         return static_cast<int32_t>(motor_shaft_position / JD8Constants::GEAR_REDUCTION_RATIO);
@@ -400,14 +400,14 @@ int32_t JD8Controller::get_actual_output_shaft_position_counts() const {
     return 0;
 }
 
-int16_t JD8Controller::get_actual_torque_millinm() const {
+int16_t JD8Controller::getTorque() const {
     if (input_pdo_) {
         return JD8Constants::pdo_to_millinm(input_pdo_->torque_actual);
     }
     return 0;
 }
 
-uint16_t JD8Controller::get_status_word() const {
+uint16_t JD8Controller::getStatus() const {
     if (input_pdo_) {
         return input_pdo_->statusword;
     }
@@ -639,7 +639,7 @@ void JD8Controller::handle_fault_recovery() {
 
 // === Configuration Management Implementation ===
 
-bool JD8Controller::load_configuration(const std::string& config_file) {
+bool JD8Controller::loadConfig(const std::string& config_file) {
     std::cout << "Loading motor configuration from: " << config_file << std::endl;
     
     // Create new configuration parser
@@ -664,34 +664,24 @@ bool JD8Controller::load_configuration(const std::string& config_file) {
     std::cout << "Configuration loaded successfully" << std::endl;
     std::cout << "  Parameters: " << config_parser_->getParameterCount() << std::endl;
     std::cout << "  Encoder Resolution: " << motor_specs.encoder_resolution << " counts/rev" << std::endl;
-    std::cout << "  Velocity Resolution: " << motor_specs.velocity_resolution << std::endl;
-    std::cout << "  Velocity Scaling Factor: " << config_parser_->calculateVelocityScalingFactor() << std::endl;
+    // Velocity Resolution removed - not needed
+    // Velocity Scaling Factor removed - always 1
     
-    // Verify scaling factor matches our corrected constants
-    double config_scaling = config_parser_->calculateVelocityScalingFactor();
-    double code_scaling = JD8Constants::RPM_SCALING_FACTOR;
-    
-    if (std::abs(config_scaling - code_scaling) > 0.001) {
-        log_error(ErrorSeverity::WARNING, 
-                  "Velocity scaling mismatch: Config=" + std::to_string(config_scaling) + 
-                  ", Code=" + std::to_string(code_scaling));
-    } else {
-        std::cout << "Velocity scaling factor verified: " << code_scaling << std::endl;
-    }
+    // Velocity scaling verification removed - scaling factor is always 1
     
     return true;
 }
 
-const JD8ConfigParser* JD8Controller::get_configuration() const {
+const JD8ConfigParser* JD8Controller::getConfig() const {
     return config_parser_.get();
 }
 
-bool JD8Controller::has_configuration() const {
+bool JD8Controller::hasConfig() const {
     return config_parser_ && config_parser_->isLoaded();
 }
 
-bool JD8Controller::upload_configuration() {
-    if (!has_configuration()) {
+bool JD8Controller::uploadConfig() {
+    if (!hasConfig()) {
         log_error(ErrorSeverity::ERROR, "No configuration loaded - cannot upload parameters");
         return false;
     }
@@ -708,7 +698,7 @@ bool JD8Controller::upload_configuration() {
     }
     
     // Upload complete configuration
-    JD8SDOManager::SDOResult result = sdo_manager_->uploadCompleteConfiguration(*config_parser_);
+    JD8SDOManager::SDOResult result = sdo_manager_->uploadComplete(*config_parser_);
     
     if (result == JD8SDOManager::SDOResult::SUCCESS) {
         std::cout << "Motor configuration uploaded successfully!" << std::endl;
@@ -729,8 +719,8 @@ bool JD8Controller::upload_configuration() {
     }
 }
 
-bool JD8Controller::upload_critical_parameters() {
-    if (!has_configuration()) {
+bool JD8Controller::uploadCriticalParam() {
+    if (!hasConfig()) {
         log_error(ErrorSeverity::ERROR, "No configuration loaded - cannot upload parameters");
         return false;
     }
@@ -758,7 +748,7 @@ bool JD8Controller::upload_critical_parameters() {
     }
 }
 
-const JD8SDOManager* JD8Controller::get_sdo_manager() const {
+const JD8SDOManager* JD8Controller::getSDO() const {
     return sdo_manager_.get();
 }
 

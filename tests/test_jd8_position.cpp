@@ -20,8 +20,8 @@ int main(int argc, char* argv[]) {
     
     std::cout << "=== Position Control Test (90 Degree Output Shaft Move) ===" << std::endl;
     
-    int32_t start_output_pos = motor.get_actual_output_shaft_position_counts();
-    int32_t start_motor_pos = motor.get_actual_position_counts();
+    int32_t start_output_pos = motor.getOutputPos();
+    int32_t start_motor_pos = motor.getPosition();
     std::cout << "Starting output shaft position: " << start_output_pos << std::endl;
     std::cout << "Starting motor shaft position: " << start_motor_pos << std::endl;
     
@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
         motor.update();
         
         if (i % 50 == 0) {
-            int32_t motor_shaft_pos = motor.get_actual_position_counts();
-            int32_t output_shaft_pos = motor.get_actual_output_shaft_position_counts();
+            int32_t motor_shaft_pos = motor.getPosition();
+            int32_t output_shaft_pos = motor.getOutputPos();
             int32_t output_error = target_pos - output_shaft_pos;
             
             std::cout << "Cycle " << i 

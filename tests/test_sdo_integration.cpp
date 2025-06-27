@@ -90,21 +90,21 @@ void test_controller_integration() {
     jd8::JD8Controller controller;
     
     // Test configuration loading
-    bool config_loaded = controller.load_configuration("../config/JDLINK8_config_file.csv");
+    bool config_loaded = controller.loadConfig("../config/JDLINK8_config_file.csv");
     assert(config_loaded);
-    assert(controller.has_configuration());
-    assert(controller.get_configuration() != nullptr);
+    assert(controller.hasConfig());
+    assert(controller.getConfig() != nullptr);
     
     std::cout << "Controller configuration loading works" << std::endl;
     
     // Test SDO manager access (should be null until EtherCAT is operational)
-    const auto* sdo_manager = controller.get_sdo_manager();
+    const auto* sdo_manager = controller.getSDO();
     assert(sdo_manager == nullptr);  // Should be null until upload is attempted
     
     std::cout << "SDO manager integration ready" << std::endl;
     
     // Test configuration data access
-    const auto* config = controller.get_configuration();
+    const auto* config = controller.getConfig();
     auto gains = config->getControlGains();
     
     // Verify the tuned gains from your external software are loaded
@@ -230,8 +230,8 @@ int main() {
         
         std::cout << "\nReady for Motor Connection!" << std::endl;
         std::cout << "When you connect to your motor and run:" << std::endl;
-        std::cout << "  controller.load_configuration(\"config/JDLINK8_config_file.csv\");" << std::endl;
-        std::cout << "  controller.upload_configuration();" << std::endl;
+        std::cout << "  controller.loadConfig(\"config/JDLINK8_config_file.csv\");" << std::endl;
+        std::cout << "  controller.uploadConfig();" << std::endl;
         std::cout << "Your tuned gains will be automatically uploaded!" << std::endl;
         
     } catch (const std::exception& e) {

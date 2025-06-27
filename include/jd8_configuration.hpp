@@ -179,7 +179,7 @@ public:
      * @brief Calculate proper velocity scaling factor
      * @return Calculated velocity factor for accurate RPM
      */
-    double calculateVelocityScalingFactor() const;
+    double calcVelScale() const;
     
     // === Utility Functions ===
     

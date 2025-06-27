@@ -62,9 +62,9 @@ int main(int argc, char* argv[]) {
         
         if (cycle % 100 == 0) {
             std::cout << "Cycle " << cycle 
-                      << " | State: " << motor.get_motor_state_string()
-                      << " | Actual: " << motor.get_actual_torque_millinm() << " mNm"
-                      << " | Position: " << motor.get_actual_position_counts() << std::endl;
+                      << " | State: " << motor.getStateStr()
+                      << " | Actual: " << motor.getTorque() << " mNm"
+                      << " | Position: " << motor.getPosition() << std::endl;
         }
         
         std::this_thread::sleep_for(std::chrono::microseconds(1000));
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
         
         if (cycle % 100 == 0) {
             std::cout << "Cycle " << cycle 
-                      << " | Actual: " << motor.get_actual_torque_millinm() << " mNm" << std::endl;
+                      << " | Actual: " << motor.getTorque() << " mNm" << std::endl;
         }
         
         std::this_thread::sleep_for(std::chrono::microseconds(1000));

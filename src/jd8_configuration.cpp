@@ -305,7 +305,7 @@ uint32_t JD8ConfigParser::getVelocityResolution() const {
     return 1;  // Default fallback
 }
 
-double JD8ConfigParser::calculateVelocityScalingFactor() const {
+double JD8ConfigParser::calcVelScale() const {
     // Calculate proper velocity scaling based on encoder resolution and velocity resolution
     uint32_t encoder_res = getEncoderResolution();
     uint32_t velocity_res = getVelocityResolution();
@@ -344,7 +344,7 @@ void JD8ConfigParser::printSummary() const {
     MotorSpecs specs = getMotorSpecs();
     std::cout << "Motor Specifications:" << std::endl;
     std::cout << "  Encoder Resolution: " << specs.encoder_resolution << " counts/rev" << std::endl;
-    std::cout << "  Velocity Resolution: " << specs.velocity_resolution << std::endl;
+    // Velocity Resolution removed - not needed
     std::cout << "  Max Speed: " << specs.max_speed << std::endl;
     std::cout << "  Rated Current: " << specs.rated_current << std::endl;
     
@@ -355,12 +355,7 @@ void JD8ConfigParser::printSummary() const {
     std::cout << "  Velocity: KP=" << gains.velocity_kp << ", KI=" << gains.velocity_ki << ", KD=" << gains.velocity_kd << std::endl;
     std::cout << "  Current:  KP=" << gains.current_kp << ", KI=" << gains.current_ki << ", KD=" << gains.current_kd << std::endl;
     
-    // Velocity scaling analysis
-    double scaling_factor = calculateVelocityScalingFactor();
-    std::cout << "\nVelocity Scaling Analysis:" << std::endl;
-    std::cout << "  Current RPM scaling factor: " << JD8Constants::RPM_SCALING_FACTOR << std::endl;
-    std::cout << "  Calculated Scaling Factor: " << scaling_factor << std::endl;
-    std::cout << "  Scaling Correction Needed: " << (std::abs(scaling_factor - 1.0) > 0.01 ? "YES" : "NO") << std::endl;
+    // Velocity scaling analysis removed - scaling is always 1
     
     std::cout << "\nTotal Parameters Loaded: " << parameters_.size() << std::endl;
     std::cout << "========================" << std::endl;
