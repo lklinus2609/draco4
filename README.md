@@ -7,8 +7,9 @@ A C++ library for controlling JD8 servo motors via EtherCAT communication using 
 - **CIA402 State Machine**: Complete implementation of the CIA402 motor control state machine
 - **Multiple Control Modes**: Support for velocity, position, and torque control
 - **Safety Features**: Torque ramping, position rate limiting, and fault recovery
-- **Real-time Operation**: Designed for 1ms cycle time real-time control
+- **Real-time Operation**: Designed for 4ms cycle time (250Hz) real-time control
 - **Professional Documentation**: Comprehensive Doxygen-style API documentation
+- **Configuration Management**: CSV-based motor configuration with SDO parameter upload
 
 ## Requirements
 
@@ -37,20 +38,24 @@ jd8::JD8Controller motor;
 
 // Initialize EtherCAT
 motor.initialize("eth0");  // Replace with your network interface
-motor.scan_network();
-motor.configure_slaves();
-motor.start_operation();
+motor.scan();
+motor.configure();
+motor.start();
+
+// Load motor configuration
+motor.loadConfig("config/JDLINK8_config_file.csv");
+motor.uploadConfig();
 
 // Enable motor
-motor.enable_motor();
+motor.enable();
 
 // Control the motor
 motor.set_velocity_rpm(1000);  // 1000 RPM
 
-// Update loop (call at 1ms intervals)
+// Update loop (call at 4ms intervals for 250Hz)
 while (running) {
     motor.update();
-    std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    std::this_thread::sleep_for(std::chrono::microseconds(4000));
 }
 ```
 
@@ -58,32 +63,64 @@ while (running) {
 
 The project includes several test programs:
 
-- `test_simple_velocity` - Velocity control with gear ratio scaling
+- `test_jd8_velocity` - Velocity control with precision timing analysis
 - `test_jd8_position` - Position control with gear ratio scaling  
-- `test_jd8_torque` - Torque control test
+- `test_jd8_torque` - Torque control test with safety limits
 - `test_sdo_integration` - SDO and configuration integration test
 
 Run with:
 ```bash
-sudo ./test_simple_velocity eth0  # Replace with your interface
+sudo ./test_jd8_velocity eth0  # Replace with your interface
 ```
 
 ## Project Structure
 
 ```
 draco4/
-├── include/              # Header files
-│   ├── jd8_controller.hpp
-│   └── jd8_pdo_structures.hpp
-├── src/                  # Implementation files
-│   ├── jd8_controller.cpp
-│   ├── jd8_configuration.cpp
-│   └── ethercat_master.cpp
-├── tests/                # Test programs
-├── legacy/               # Legacy C reference implementation
-├── config/               # Motor configuration files
+├── include/                   # Header files
+│   ├── jd8_controller.hpp     # Main motor controller interface
+│   ├── jd8_configuration.hpp  # Configuration file parser
+│   ├── jd8_sdo_manager.hpp    # SDO communication manager
+│   └── jd8_pdo_structures.hpp # EtherCAT PDO data structures
+├── src/                       # Implementation files
+│   ├── jd8_controller.cpp     # Motor controller implementation
+│   ├── jd8_configuration.cpp  # Configuration parsing
+│   └── jd8_sdo_manager.cpp    # SDO operations
+├── tests/                     # Test programs
+│   ├── test_jd8_velocity.cpp  # Velocity control test
+│   ├── test_jd8_position.cpp  # Position control test
+│   ├── test_jd8_torque.cpp    # Torque control test
+│   └── test_sdo_integration.cpp # SDO integration test
+├── config/                    # Motor configuration files
+│   └── JDLINK8_config_file.csv
+├── legacy/                    # Legacy C reference implementation
 └── CMakeLists.txt
 ```
+
+## Key Functions
+
+### Motor Control
+- `initialize(interface)` - Initialize EtherCAT master
+- `scan()` - Scan for EtherCAT slaves
+- `configure()` - Configure discovered slaves
+- `start()` - Start operational mode
+- `enable()` - Enable motor using CIA402 state machine
+
+### Configuration
+- `loadConfig(file)` - Load motor parameters from CSV
+- `uploadConfig()` - Upload configuration to motor via SDO
+
+### Control Commands
+- `set_velocity_rpm(rpm)` - Set velocity command
+- `setPosition(counts)` - Set position command
+- `setTorque(millinm)` - Set torque command
+
+### Feedback
+- `getMotorRPM()` - Get motor shaft velocity
+- `getOutputRPM()` - Get output shaft velocity  
+- `getPosition()` - Get motor shaft position
+- `getOutputPos()` - Get output shaft position
+- `getTorque()` - Get actual torque feedback
 
 ## Safety Notes
 
@@ -91,6 +128,7 @@ draco4/
 - **Network Interface**: Ensure the specified network interface is connected to your EtherCAT network
 - **Motor Safety**: The library includes safety limits for torque and position changes
 - **Emergency Stop**: Use `emergency_stop()` method for immediate motion halt
+- **Real-time Timing**: Maintain 4ms (250Hz) update cycles for optimal performance
 
 ## Contributing
 
