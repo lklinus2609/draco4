@@ -1,4 +1,4 @@
-#include "jd8_controller.hpp"
+#include "motor_controller.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
     std::cout << "Rated torque: 6 Nm, Testing at 50% limit (3 Nm)" << std::endl;
     std::cout << "Press Ctrl+C to stop" << std::endl;
     
-    jd8::JD8Controller motor;
+    synapticon_motor::MotorController motor;
     
     // Initialize EtherCAT using your proven sequence
     if (!motor.initialize(interface_name)) {

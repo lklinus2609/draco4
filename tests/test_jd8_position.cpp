@@ -1,4 +1,4 @@
-#include "jd8_controller.hpp"
+#include "motor_controller.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -9,7 +9,7 @@ int main(int argc, char* argv[]) {
         return 1;
     }
     
-    jd8::JD8Controller motor;
+    synapticon_motor::MotorController motor;
     
     if (!motor.initialize(argv[1]) || !motor.scan_network() || 
         !motor.configure_slaves() || !motor.start_operation() || 
@@ -26,11 +26,13 @@ int main(int argc, char* argv[]) {
     std::cout << "Starting motor shaft position: " << start_motor_pos << std::endl;
     
     // Move output shaft by 90 degrees (1/4 revolution)
-    int32_t target_offset = jd8::JD8Constants::COUNTS_PER_REV / 4;  // 90 degrees = 131072 counts
+    uint32_t counts_per_rev = synapticon_motor::MotorConstants::getCountsPerRev(motor.getConfig());
+    double gear_ratio = synapticon_motor::MotorConstants::getGearReductionRatio(motor.getConfig());
+    int32_t target_offset = counts_per_rev / 4;  // 90 degrees = 131072 counts
     int32_t target_pos = start_output_pos + target_offset;
     
     std::cout << "Target output shaft position: " << target_pos << " (change: +" << target_offset << " counts = 90 degrees)" << std::endl;
-    std::cout << "Expected motor shaft movement: " << (target_offset * 7.75) << " counts" << std::endl;
+    std::cout << "Expected motor shaft movement: " << (target_offset * gear_ratio) << " counts" << std::endl;
     
     motor.set_position_counts(target_pos);
     

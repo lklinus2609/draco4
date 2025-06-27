@@ -14,19 +14,19 @@
 #include <unordered_map>
 #include <variant>
 #include <cstdint>
-#include "jd8_pdo_structures.hpp"
+#include "motor_pdo_structures.hpp"
 
-namespace jd8 {
+namespace synapticon_motor {
 
 /**
- * @class JD8ConfigParser
- * @brief Configuration file parser for JD8 motor parameters
+ * @class MotorConfigParser
+ * @brief Configuration file parser for motor parameters
  * 
  * Parses CSV configuration files in the format: INDEX, SUBINDEX, VALUE
  * and provides structured access to motor parameters, control gains,
  * and safety limits.
  */
-class JD8ConfigParser {
+class MotorConfigParser {
 public:
     /**
      * @struct Parameter
@@ -96,12 +96,12 @@ public:
     /**
      * @brief Constructor
      */
-    JD8ConfigParser();
+    MotorConfigParser();
     
     /**
      * @brief Destructor
      */
-    ~JD8ConfigParser();
+    ~MotorConfigParser();
     
     // === Core Parsing Functions ===
     
@@ -181,6 +181,56 @@ public:
      */
     double calcVelScale() const;
     
+    // === Motor Hardware Specifications ===
+    
+    /**
+     * @brief Get gear reduction ratio from configuration
+     * @return Gear reduction ratio (motor shaft to output shaft)
+     */
+    double getGearReductionRatio() const;
+    
+    /**
+     * @brief Get maximum motor velocity from configuration
+     * @return Maximum velocity in RPM
+     */
+    uint32_t getMaxVelocityRPM() const;
+    
+    /**
+     * @brief Get rated motor torque from configuration
+     * @return Rated torque in mNm
+     */
+    uint16_t getRatedTorqueMNm() const;
+    
+    /**
+     * @brief Get maximum motor torque from configuration
+     * @return Maximum torque in mNm
+     */
+    uint16_t getMaxTorqueMNm() const;
+    
+    /**
+     * @brief Get torque ramp rate from configuration
+     * @return Torque ramp rate in mNm per cycle
+     */
+    uint16_t getTorqueRampRate() const;
+    
+    /**
+     * @brief Get rated motor current from configuration
+     * @return Rated current in mA
+     */
+    uint16_t getRatedCurrent() const;
+    
+    /**
+     * @brief Get profile acceleration from configuration
+     * @return Profile acceleration
+     */
+    uint32_t getProfileAcceleration() const;
+    
+    /**
+     * @brief Get profile deceleration from configuration
+     * @return Profile deceleration
+     */
+    uint32_t getProfileDeceleration() const;
+    
     // === Utility Functions ===
     
     /**
@@ -255,4 +305,4 @@ private:
     // (Object dictionary indices moved to JD8Constants to avoid duplication)
 };
 
-} // namespace jd8
+} // namespace synapticon_motor

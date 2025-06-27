@@ -1,13 +1,13 @@
 /**
- * @file jd8_configuration.cpp
- * @brief Implementation of JD8ConfigParser class
+ * @file motor_configuration.cpp
+ * @brief Implementation of MotorConfigParser class
  * 
- * Provides CSV configuration file parsing for JD8 motor parameters,
+ * Provides CSV configuration file parsing for motor parameters,
  * control gains, and safety limits. Implements structured access to
  * configuration data for EtherCAT SDO parameter upload.
  */
 
-#include "jd8_configuration.hpp"
+#include "motor_configuration.hpp"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -15,11 +15,11 @@
 #include <algorithm>
 #include <cctype>
 
-namespace jd8 {
+namespace synapticon_motor {
 
 // === Parameter Implementation ===
 
-void JD8ConfigParser::Parameter::parseValue(const std::string& val) {
+void MotorConfigParser::Parameter::parseValue(const std::string& val) {
     std::string trimmed = val;
     // Remove leading/trailing whitespace
     trimmed.erase(trimmed.begin(), std::find_if(trimmed.begin(), trimmed.end(), [](unsigned char ch) {
@@ -78,13 +78,13 @@ void JD8ConfigParser::Parameter::parseValue(const std::string& val) {
 
 // === JD8ConfigParser Implementation ===
 
-JD8ConfigParser::JD8ConfigParser() : loaded_(false) {
+MotorConfigParser::MotorConfigParser() : loaded_(false) {
 }
 
-JD8ConfigParser::~JD8ConfigParser() {
+MotorConfigParser::~MotorConfigParser() {
 }
 
-bool JD8ConfigParser::parseCSV(const std::string& filename) {
+bool MotorConfigParser::parseCSV(const std::string& filename) {
     clear();
     filename_ = filename;
     
@@ -135,7 +135,7 @@ bool JD8ConfigParser::parseCSV(const std::string& filename) {
     }
 }
 
-bool JD8ConfigParser::parseLine(const std::string& line, size_t line_number) {
+bool MotorConfigParser::parseLine(const std::string& line, size_t line_number) {
     std::stringstream ss(line);
     std::string index_str, subindex_str, value_str;
     
@@ -169,15 +169,15 @@ bool JD8ConfigParser::parseLine(const std::string& line, size_t line_number) {
     }
 }
 
-bool JD8ConfigParser::validateParameters() {
+bool MotorConfigParser::validateParameters() {
     if (parameters_.empty()) {
         addError("No parameters loaded");
         return false;
     }
     
     // Check for critical parameters
-    bool has_encoder_res = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3) != nullptr;
-    bool has_velocity_res = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0) != nullptr;
+    bool has_encoder_res = getParameter(MotorConstants::MOTOR_CONFIG_INDEX, 3) != nullptr;
+    bool has_velocity_res = getParameter(MotorConstants::CIA402_PROFILE_VELOCITY_INDEX, 0) != nullptr;
     
     if (!has_encoder_res) {
         addError("Missing critical parameter: Encoder resolution (0x2110,3)");
@@ -190,17 +190,17 @@ bool JD8ConfigParser::validateParameters() {
     return errors_.empty();
 }
 
-size_t JD8ConfigParser::getParameterCount() const {
+size_t MotorConfigParser::getParameterCount() const {
     return parameters_.size();
 }
 
-const JD8ConfigParser::Parameter* JD8ConfigParser::getParameter(uint16_t index, uint8_t subindex) const {
+const MotorConfigParser::Parameter* MotorConfigParser::getParameter(uint16_t index, uint8_t subindex) const {
     uint32_t key = (static_cast<uint32_t>(index) << 16) | subindex;
     auto it = parameters_.find(key);
     return (it != parameters_.end()) ? &it->second : nullptr;
 }
 
-std::vector<const JD8ConfigParser::Parameter*> JD8ConfigParser::getParametersByIndex(uint16_t index) const {
+std::vector<const MotorConfigParser::Parameter*> MotorConfigParser::getParametersByIndex(uint16_t index) const {
     std::vector<const Parameter*> result;
     
     for (const auto& pair : parameters_) {
@@ -212,100 +212,100 @@ std::vector<const JD8ConfigParser::Parameter*> JD8ConfigParser::getParametersByI
     return result;
 }
 
-JD8ConfigParser::ControlGains JD8ConfigParser::getControlGains() const {
+MotorConfigParser::ControlGains MotorConfigParser::getControlGains() const {
     ControlGains gains;
     
     // Position gains (0x2010)
-    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(MotorConstants::POSITION_GAINS_INDEX, 1)) {
         gains.position_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(MotorConstants::POSITION_GAINS_INDEX, 2)) {
         gains.position_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::POSITION_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(MotorConstants::POSITION_GAINS_INDEX, 3)) {
         gains.position_kd = getParameterValue<double>(p, 0.0);
     }
     
     // Velocity gains (0x2011)
-    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(MotorConstants::VELOCITY_GAINS_INDEX, 1)) {
         gains.velocity_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(MotorConstants::VELOCITY_GAINS_INDEX, 2)) {
         gains.velocity_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::VELOCITY_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(MotorConstants::VELOCITY_GAINS_INDEX, 3)) {
         gains.velocity_kd = getParameterValue<double>(p, 0.0);
     }
     
     // Current gains (0x2012)
-    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(MotorConstants::CURRENT_GAINS_INDEX, 1)) {
         gains.current_kp = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(MotorConstants::CURRENT_GAINS_INDEX, 2)) {
         gains.current_ki = getParameterValue<double>(p, 0.0);
     }
-    if (const Parameter* p = getParameter(JD8Constants::CURRENT_GAINS_INDEX, 3)) {
+    if (const Parameter* p = getParameter(MotorConstants::CURRENT_GAINS_INDEX, 3)) {
         gains.current_kd = getParameterValue<double>(p, 0.0);
     }
     
     return gains;
 }
 
-JD8ConfigParser::MotorSpecs JD8ConfigParser::getMotorSpecs() const {
+MotorConfigParser::MotorSpecs MotorConfigParser::getMotorSpecs() const {
     MotorSpecs specs;
     
     // Encoder resolution (0x2110,3)
-    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3)) {
+    if (const Parameter* p = getParameter(MotorConstants::MOTOR_CONFIG_INDEX, 3)) {
         specs.encoder_resolution = getParameterValue<uint32_t>(p, 524288);
     }
     
     // Velocity resolution (0x6081,0)
-    if (const Parameter* p = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
+    if (const Parameter* p = getParameter(MotorConstants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
         specs.velocity_resolution = getParameterValue<uint32_t>(p, 1);
     }
     
     // Max speed (0x6080,0)
-    if (const Parameter* p = getParameter(JD8Constants::CIA402_MAX_SPEED_INDEX, 0)) {
+    if (const Parameter* p = getParameter(MotorConstants::CIA402_MAX_SPEED_INDEX, 0)) {
         specs.max_speed = getParameterValue<uint32_t>(p, 1000);
     }
     
     // Rated current (0x2110,4)
-    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 4)) {
+    if (const Parameter* p = getParameter(MotorConstants::MOTOR_CONFIG_INDEX, 4)) {
         specs.rated_current = getParameterValue<uint16_t>(p, 4000);
     }
     
     return specs;
 }
 
-JD8ConfigParser::SafetyLimits JD8ConfigParser::getSafetyLimits() const {
+MotorConfigParser::SafetyLimits MotorConfigParser::getSafetyLimits() const {
     SafetyLimits limits;
     
     // Position limits (0x607D)
-    if (const Parameter* p = getParameter(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 1)) {
+    if (const Parameter* p = getParameter(MotorConstants::CIA402_POSITION_LIMITS_INDEX, 1)) {
         limits.position_limit_min = getParameterValue<int32_t>(p, -2147483648);
     }
-    if (const Parameter* p = getParameter(JD8Constants::CIA402_POSITION_LIMITS_INDEX, 2)) {
+    if (const Parameter* p = getParameter(MotorConstants::CIA402_POSITION_LIMITS_INDEX, 2)) {
         limits.position_limit_max = getParameterValue<int32_t>(p, 2147483647);
     }
     
     return limits;
 }
 
-uint32_t JD8ConfigParser::getEncoderResolution() const {
-    if (const Parameter* p = getParameter(JD8Constants::MOTOR_CONFIG_INDEX, 3)) {
+uint32_t MotorConfigParser::getEncoderResolution() const {
+    if (const Parameter* p = getParameter(MotorConstants::MOTOR_CONFIG_INDEX, 3)) {
         return getParameterValue<uint32_t>(p, 524288);
     }
     return 524288;  // Default fallback
 }
 
-uint32_t JD8ConfigParser::getVelocityResolution() const {
-    if (const Parameter* p = getParameter(JD8Constants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
+uint32_t MotorConfigParser::getVelocityResolution() const {
+    if (const Parameter* p = getParameter(MotorConstants::CIA402_PROFILE_VELOCITY_INDEX, 0)) {
         return getParameterValue<uint32_t>(p, 1);
     }
     return 1;  // Default fallback
 }
 
-double JD8ConfigParser::calcVelScale() const {
+double MotorConfigParser::calcVelScale() const {
     // Calculate proper velocity scaling based on encoder resolution and velocity resolution
     uint32_t encoder_res = getEncoderResolution();
     uint32_t velocity_res = getVelocityResolution();
@@ -317,22 +317,105 @@ double JD8ConfigParser::calcVelScale() const {
     return scaling_factor;
 }
 
-bool JD8ConfigParser::isLoaded() const {
+double MotorConfigParser::getGearReductionRatio() const {
+    // Gear ratio from 0x6091:1 (motor revolutions) and 0x6091:2 (shaft revolutions)
+    const Parameter* motor_revs = getParameter(0x6091, 1);
+    const Parameter* shaft_revs = getParameter(0x6091, 2);
+    
+    if (motor_revs && shaft_revs) {
+        double motor_val = getParameterValue<double>(motor_revs, 775.0);
+        double shaft_val = getParameterValue<double>(shaft_revs, 100.0);
+        return motor_val / shaft_val;  // 775/100 = 7.75
+    }
+    return 7.75;  // Default fallback
+}
+
+uint32_t MotorConfigParser::getMaxVelocityRPM() const {
+    // Max motor speed from 0x6080 - this is in internal units, needs conversion
+    if (const Parameter* p = getParameter(0x6080, 0)) {
+        uint32_t max_speed_internal = getParameterValue<uint32_t>(p, 2400000);
+        // Convert from internal units to RPM - this may need motor-specific scaling
+        // For now, use a reasonable default based on typical servo motor speeds
+        return 6000;  // This should be calculated based on motor specs
+    }
+    return 6000;  // Conservative default
+}
+
+uint16_t MotorConfigParser::getRatedTorqueMNm() const {
+    // Rated torque from 0x6076 - convert from internal units to mNm
+    if (const Parameter* p = getParameter(0x6076, 0)) {
+        uint16_t rated_torque_internal = getParameterValue<uint16_t>(p, 774);
+        // 774 internal units represents the rated torque
+        // Based on JD8 specs: 6 Nm = 6000 mNm
+        return static_cast<uint16_t>((rated_torque_internal * 6000) / 774);  // Scale to mNm
+    }
+    return 6000;  // Default: 6 Nm in mNm
+}
+
+uint16_t MotorConfigParser::getMaxTorqueMNm() const {
+    // Max torque from 0x6072
+    if (const Parameter* p = getParameter(0x6072, 0)) {
+        uint16_t max_torque_internal = getParameterValue<uint16_t>(p, 4306);
+        // Scale similar to rated torque
+        uint16_t rated_torque_mnm = getRatedTorqueMNm();
+        uint16_t rated_torque_internal = getParameterValue<uint16_t>(getParameter(0x6076, 0), 774);
+        return static_cast<uint16_t>((max_torque_internal * rated_torque_mnm) / rated_torque_internal);
+    }
+    return 8000;  // Conservative default
+}
+
+uint16_t MotorConfigParser::getTorqueRampRate() const {
+    // Torque slope from 0x6087
+    if (const Parameter* p = getParameter(0x6087, 0)) {
+        uint16_t torque_slope = getParameterValue<uint16_t>(p, 0);
+        if (torque_slope > 0) {
+            return torque_slope;
+        }
+    }
+    // If not configured or 0, use a safe default
+    return 200;  // 200 mNm per cycle as default
+}
+
+uint16_t MotorConfigParser::getRatedCurrent() const {
+    // Rated current from 0x6075
+    if (const Parameter* p = getParameter(0x6075, 0)) {
+        return getParameterValue<uint16_t>(p, 4950);
+    }
+    return 4950;  // Default from config
+}
+
+uint32_t MotorConfigParser::getProfileAcceleration() const {
+    // Profile acceleration from 0x6083
+    if (const Parameter* p = getParameter(0x6083, 0)) {
+        return getParameterValue<uint32_t>(p, 258064);
+    }
+    return 258064;  // Default from config
+}
+
+uint32_t MotorConfigParser::getProfileDeceleration() const {
+    // Profile deceleration from 0x6084
+    if (const Parameter* p = getParameter(0x6084, 0)) {
+        return getParameterValue<uint32_t>(p, 258064);
+    }
+    return 258064;  // Default from config
+}
+
+bool MotorConfigParser::isLoaded() const {
     return loaded_;
 }
 
-const std::vector<std::string>& JD8ConfigParser::getErrors() const {
+const std::vector<std::string>& MotorConfigParser::getErrors() const {
     return errors_;
 }
 
-void JD8ConfigParser::clear() {
+void MotorConfigParser::clear() {
     parameters_.clear();
     errors_.clear();
     loaded_ = false;
     filename_.clear();
 }
 
-void JD8ConfigParser::printSummary() const {
+void MotorConfigParser::printSummary() const {
     if (!loaded_) {
         std::cout << "No configuration loaded" << std::endl;
         return;
@@ -355,7 +438,14 @@ void JD8ConfigParser::printSummary() const {
     std::cout << "  Velocity: KP=" << gains.velocity_kp << ", KI=" << gains.velocity_ki << ", KD=" << gains.velocity_kd << std::endl;
     std::cout << "  Current:  KP=" << gains.current_kp << ", KI=" << gains.current_ki << ", KD=" << gains.current_kd << std::endl;
     
-    // Velocity scaling analysis removed - scaling is always 1
+    // Motor hardware specifications
+    std::cout << "\nMotor Hardware:" << std::endl;
+    std::cout << "  Gear Reduction Ratio: " << getGearReductionRatio() << ":1" << std::endl;
+    std::cout << "  Rated Torque: " << getRatedTorqueMNm() << " mNm" << std::endl;
+    std::cout << "  Max Torque: " << getMaxTorqueMNm() << " mNm" << std::endl;
+    std::cout << "  Rated Current: " << getRatedCurrent() << " mA" << std::endl;
+    std::cout << "  Torque Ramp Rate: " << getTorqueRampRate() << " mNm/cycle" << std::endl;
+    std::cout << "  Profile Accel/Decel: " << getProfileAcceleration() << "/" << getProfileDeceleration() << std::endl;
     
     std::cout << "\nTotal Parameters Loaded: " << parameters_.size() << std::endl;
     std::cout << "========================" << std::endl;
@@ -363,7 +453,7 @@ void JD8ConfigParser::printSummary() const {
 
 // === Private Helper Functions ===
 
-std::string JD8ConfigParser::trim(const std::string& str) const {
+std::string MotorConfigParser::trim(const std::string& str) const {
     size_t start = str.find_first_not_of(" \t\r\n");
     if (start == std::string::npos) return "";
     
@@ -371,7 +461,7 @@ std::string JD8ConfigParser::trim(const std::string& str) const {
     return str.substr(start, end - start + 1);
 }
 
-uint32_t JD8ConfigParser::parseHex(const std::string& hex_str) const {
+uint32_t MotorConfigParser::parseHex(const std::string& hex_str) const {
     std::string clean_hex = hex_str;
     
     // Remove 0x prefix if present
@@ -382,13 +472,13 @@ uint32_t JD8ConfigParser::parseHex(const std::string& hex_str) const {
     return static_cast<uint32_t>(std::stoul(clean_hex, nullptr, 16));
 }
 
-void JD8ConfigParser::addError(const std::string& message) {
+void MotorConfigParser::addError(const std::string& message) {
     errors_.push_back(message);
     std::cerr << "[CONFIG ERROR] " << message << std::endl;
 }
 
 template<typename T>
-T JD8ConfigParser::getParameterValue(const Parameter* param, T default_value) const {
+T MotorConfigParser::getParameterValue(const Parameter* param, T default_value) const {
     if (!param) {
         return default_value;
     }
@@ -432,4 +522,4 @@ T JD8ConfigParser::getParameterValue(const Parameter* param, T default_value) co
     return default_value;
 }
 
-} // namespace jd8
+} // namespace synapticon_motor

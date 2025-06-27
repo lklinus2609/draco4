@@ -1,32 +1,32 @@
 /**
- * @file jd8_sdo_manager.hpp
- * @brief JD8 SDO (Service Data Object) Manager
+ * @file motor_sdo_manager.hpp
+ * @brief Motor SDO (Service Data Object) Manager
  * 
  * Handles EtherCAT SDO communication for uploading motor configuration
- * parameters, control gains, and safety limits to JD8 servo drives.
+ * parameters, control gains, and safety limits to Synapticon servo drives.
  * Provides safe parameter upload with validation and verification.
  */
 
 #pragma once
 
-#include "jd8_configuration.hpp"
+#include "motor_configuration.hpp"
 #include <soem/ethercat.h>
 #include <string>
 #include <vector>
 #include <cstdint>
-#include "jd8_pdo_structures.hpp"
+#include "motor_pdo_structures.hpp"
 
-namespace jd8 {
+namespace synapticon_motor {
 
 /**
- * @class JD8SDOManager
- * @brief EtherCAT SDO communication manager for JD8 motor configuration
+ * @class MotorSDOManager
+ * @brief EtherCAT SDO communication manager for motor configuration
  * 
  * Provides safe and reliable SDO communication for uploading motor
- * parameters, control gains, and configuration data to JD8 servo drives.
+ * parameters, control gains, and configuration data to Synapticon servo drives.
  * Includes parameter validation, error handling, and verification.
  */
-class JD8SDOManager {
+class MotorSDOManager {
 public:
     /**
      * @brief SDO operation result codes
@@ -56,12 +56,12 @@ public:
      * @brief Constructor
      * @param slave_index EtherCAT slave index
      */
-    JD8SDOManager(int slave_index = 1);
+    MotorSDOManager(int slave_index = 1);
     
     /**
      * @brief Destructor
      */
-    ~JD8SDOManager();
+    ~MotorSDOManager();
     
     // === Core SDO Operations ===
     
@@ -121,28 +121,28 @@ public:
      * @param gains Control gains structure
      * @return SDO operation result
      */
-    SDOResult uploadControlGains(const JD8ConfigParser::ControlGains& gains);
+    SDOResult uploadControlGains(const MotorConfigParser::ControlGains& gains);
     
     /**
      * @brief Upload motor specifications
      * @param specs Motor specifications structure
      * @return SDO operation result
      */
-    SDOResult uploadMotorSpecs(const JD8ConfigParser::MotorSpecs& specs);
+    SDOResult uploadMotorSpecs(const MotorConfigParser::MotorSpecs& specs);
     
     /**
      * @brief Upload safety limits
      * @param limits Safety limits structure
      * @return SDO operation result
      */
-    SDOResult uploadSafetyLimits(const JD8ConfigParser::SafetyLimits& limits);
+    SDOResult uploadSafetyLimits(const MotorConfigParser::SafetyLimits& limits);
     
     /**
      * @brief Upload complete configuration from parser
      * @param config Configuration parser with loaded parameters
      * @return SDO operation result
      */
-    SDOResult uploadComplete(const JD8ConfigParser& config);
+    SDOResult uploadComplete(const MotorConfigParser& config);
     
     // === Batch Operations ===
     
@@ -151,14 +151,14 @@ public:
      * @param config Configuration parser
      * @return SDO operation result
      */
-    SDOResult uploadCriticalParameters(const JD8ConfigParser& config);
+    SDOResult uploadCriticalParameters(const MotorConfigParser& config);
     
     /**
      * @brief Upload parameters by priority (safety first, then performance)
      * @param config Configuration parser
      * @return SDO operation result
      */
-    SDOResult uploadParamByPriority(const JD8ConfigParser& config);
+    SDOResult uploadParamByPriority(const MotorConfigParser& config);
     
     // === Utility Functions ===
     
@@ -288,4 +288,4 @@ private:
     // (Object dictionary indices moved to JD8Constants to avoid duplication)
 };
 
-} // namespace jd8
+} // namespace synapticon_motor

@@ -3,7 +3,7 @@
  * @brief JD8 velocity scaling test
  */
 
-#include "jd8_controller.hpp"
+#include "motor_controller.hpp"
 #include <iostream>
 #include <chrono>
 #include <thread>
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     std::cout << "=== JD8 VELOCITY TEST ===" << std::endl;
     std::cout << "Testing corrected velocity scaling" << std::endl;
     
-    jd8::JD8Controller motor;
+    synapticon_motor::MotorController motor;
     
     if (!motor.initialize(interface_name) ||
         !motor.scan_network() ||
@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     
     int32_t end_pos = motor.getPosition();
     int32_t position_change = end_pos - start_pos;
-    double actual_rpm = jd8::JD8Constants::output_rpm_from_position_change(position_change, elapsed_ms / 1000.0);
+    double actual_rpm = synapticon_motor::MotorConstants::output_rpm_from_position_change(position_change, elapsed_ms / 1000.0, motor.getConfig());
     
     std::cout << "Results:" << std::endl;
     std::cout << "  Expected duration: 10000ms" << std::endl;

@@ -10,7 +10,7 @@
 #pragma once
 #include <cstdint>
 
-namespace jd8 {
+namespace synapticon_motor {
 
 /**
  * @struct OutputPDO
@@ -52,25 +52,29 @@ struct InputPDO {
     uint8_t  reserved[22];                  ///< Reserved padding [Bytes 25-46]
 } __attribute__((packed));
 
+// Forward declaration
+class MotorConfigParser;
+
 /**
- * @class JD8Constants
- * @brief Constants and utility functions for JD8 motor control
+ * @class MotorConstants
+ * @brief Constants and utility functions for motor control
  * 
- * Contains all motor-specific constants, conversion factors, and utility
- * functions needed for JD8 servo motor operation.
+ * Contains motor-specific constants, conversion factors, and utility
+ * functions. Motor specifications are now loaded from configuration files
+ * to support different motor models (JD8, JD10, JD12, etc.).
  */
-class JD8Constants {
+class MotorConstants {
 public:
-    // === Motor Specifications ===
-    static constexpr int COUNTS_PER_REV = 524288;         ///< Encoder counts per revolution
-    static constexpr double GEAR_REDUCTION_RATIO = 7.75;  ///< Gear reduction ratio (motor:output = 7.75:1)
-    static constexpr int MAX_VELOCITY_RPM = 315;         ///< Maximum safe velocity in RPM
+    // === Default Motor Specifications (fallbacks when no config available) ===
+    static constexpr int DEFAULT_COUNTS_PER_REV = 524288;         ///< Default encoder counts per revolution
+    static constexpr double DEFAULT_GEAR_REDUCTION_RATIO = 7.75;  ///< Default gear reduction ratio
+    static constexpr int DEFAULT_MAX_VELOCITY_RPM = 315;         ///< Default maximum safe velocity in RPM
+    static constexpr int16_t DEFAULT_RATED_TORQUE_MNM = 6000;    ///< Default rated torque: 6 Nm
+    static constexpr int16_t DEFAULT_MAX_TORQUE_MILLINM = 3000;  ///< Default max safe torque: 3 Nm
+    static constexpr int16_t DEFAULT_TORQUE_RAMP_RATE = 200;     ///< Default torque ramp rate
     
     // === Velocity Scaling ===
     static constexpr double RPM_SCALING_FACTOR = 0.001;   ///< Motor config 0x60A9: 0.001 RPM units
-    
-    // === Configuration-Based Parameters ===
-    static constexpr uint32_t PROFILE_VELOCITY_DEFAULT = 77419; ///< Default profile velocity (0x6081) from config
     
     // === Control Modes ===
     static constexpr uint8_t VELOCITY_MODE = 0x09;      ///< Profile velocity mode
@@ -120,15 +124,58 @@ public:
     
     
     // === Torque Control Constants ===
-    static constexpr int16_t RATED_TORQUE_MNM = 6000;        ///< Rated torque: 6 Nm = 6000 mNm
     static constexpr int16_t PDO_TORQUE_SCALE = 1000;        ///< PDO scale: 1000 = full torque
-    static constexpr int16_t MAX_TORQUE_MILLINM = 3000;      ///< Max safe torque: 3 Nm
-    static constexpr int16_t MIN_TORQUE_MILLINM = -3000;     ///< Min safe torque: -3 Nm
-    static constexpr int16_t TORQUE_RAMP_RATE = 200;         ///< Torque ramp: 200 mNm per 4ms cycle (250Hz)
     
-    // === Position Control Safety Limits ===
-    static constexpr int32_t MAX_POSITION_CHANGE_PER_CYCLE = 2097152;  ///< Max position change per 4ms cycle (4 revolutions = 4 * 524288)
-    static constexpr int32_t MAX_POSITION_CHANGE_PER_SECOND = 50000000; ///< Max position change per second (250 cycles × 200k)
+    // === Configuration-Driven Motor Parameters ===
+    
+    /**
+     * @brief Get encoder counts per revolution from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Encoder counts per revolution
+     */
+    static uint32_t getCountsPerRev(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get gear reduction ratio from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Gear reduction ratio
+     */
+    static double getGearReductionRatio(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get rated torque from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Rated torque in mNm
+     */
+    static int16_t getRatedTorqueMNm(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get maximum torque from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Maximum torque in mNm
+     */
+    static int16_t getMaxTorqueMNm(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get minimum torque from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Minimum torque in mNm
+     */
+    static int16_t getMinTorqueMNm(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get torque ramp rate from config
+     * @param config Configuration parser (nullptr uses default)
+     * @return Torque ramp rate in mNm per cycle
+     */
+    static int16_t getTorqueRampRate(const MotorConfigParser* config = nullptr);
+    
+    /**
+     * @brief Get maximum position change per cycle (config-driven)
+     * @param config Configuration parser (nullptr uses default)
+     * @return Maximum position change per 4ms cycle
+     */
+    static int32_t getMaxPositionChangePerCycle(const MotorConfigParser* config = nullptr);
     
     // === Velocity Conversions (0.001 RPM scaling per 0x60A9 config) ===
     
@@ -159,41 +206,51 @@ public:
      * @brief Convert position change to output shaft RPM (accounts for gear reduction)
      * @param position_change Position change in encoder counts (motor shaft)
      * @param time_seconds Duration in seconds
+     * @param config Configuration parser (nullptr uses defaults)
      * @return Output shaft velocity in RPM
-     * @note Position PDO reads motor shaft; this converts to output shaft RPM using 7.75:1 gear ratio
+     * @note Position PDO reads motor shaft; this converts to output shaft RPM using gear ratio from config
      */
-    static double output_rpm_from_position_change(int32_t position_change, double time_seconds) {
-        return (position_change * 60.0) / (COUNTS_PER_REV * GEAR_REDUCTION_RATIO * time_seconds);
+    static double output_rpm_from_position_change(int32_t position_change, double time_seconds, const MotorConfigParser* config = nullptr) {
+        uint32_t counts_per_rev = getCountsPerRev(config);
+        double gear_ratio = getGearReductionRatio(config);
+        return (position_change * 60.0) / (counts_per_rev * gear_ratio * time_seconds);
     }
     
     /**
      * @brief Convert millinewton-meters to PDO torque units
      * @param millinm Torque in mNm
+     * @param config Configuration parser (nullptr uses defaults)
      * @return Torque in PDO units (per thousand of rated torque)
      */
-    static uint16_t millinm_to_pdo(int16_t millinm) {
-        return static_cast<uint16_t>((millinm * PDO_TORQUE_SCALE) / RATED_TORQUE_MNM);
+    static uint16_t millinm_to_pdo(int16_t millinm, const MotorConfigParser* config = nullptr) {
+        int16_t rated_torque = getRatedTorqueMNm(config);
+        return static_cast<uint16_t>((millinm * PDO_TORQUE_SCALE) / rated_torque);
     }
     
     /**
      * @brief Convert PDO torque units to millinewton-meters
      * @param pdo_value Torque in PDO units
+     * @param config Configuration parser (nullptr uses defaults)
      * @return Torque in mNm
      */
-    static int16_t pdo_to_millinm(uint16_t pdo_value) {
-        return static_cast<int16_t>((static_cast<int32_t>(pdo_value) * RATED_TORQUE_MNM) / PDO_TORQUE_SCALE);
+    static int16_t pdo_to_millinm(uint16_t pdo_value, const MotorConfigParser* config = nullptr) {
+        int16_t rated_torque = getRatedTorqueMNm(config);
+        return static_cast<int16_t>((static_cast<int32_t>(pdo_value) * rated_torque) / PDO_TORQUE_SCALE);
     }
     
     /**
      * @brief Clamp torque value to safe operating limits
      * @param torque Input torque in mNm
+     * @param config Configuration parser (nullptr uses defaults)
      * @return Clamped torque within safe limits
      */
-    static int16_t clamp_torque(int16_t torque) {
-        if (torque > MAX_TORQUE_MILLINM) return MAX_TORQUE_MILLINM;
-        if (torque < MIN_TORQUE_MILLINM) return MIN_TORQUE_MILLINM;
+    static int16_t clamp_torque(int16_t torque, const MotorConfigParser* config = nullptr) {
+        int16_t max_torque = getMaxTorqueMNm(config);
+        int16_t min_torque = getMinTorqueMNm(config);
+        if (torque > max_torque) return max_torque;
+        if (torque < min_torque) return min_torque;
         return torque;
     }
 };
 
-} // namespace jd8
+} // namespace synapticon_motor

@@ -2,7 +2,7 @@
 # Draco4 EtherCAT Motor Controller
 # =====================================
 # 
-# CMake build configuration for JD8 servo motor control system
+# CMake build configuration for Synapticon servo motor control system
 # using EtherCAT communication via SOEM library.
 #
 # Requirements:
@@ -13,7 +13,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(draco4_ethercat 
     VERSION 1.0.0
-    DESCRIPTION "JD8 EtherCAT Motor Controller"
+    DESCRIPTION "Synapticon EtherCAT Motor Controller"
     LANGUAGES CXX C
 )
 
@@ -33,9 +33,10 @@ include_directories(${SOEM_INCLUDE_DIRS})
 # =====================================
 
 add_library(draco4_ethercat
-    src/jd8_controller.cpp
-    src/jd8_configuration.cpp
-    src/jd8_sdo_manager.cpp
+    src/motor_controller.cpp
+    src/motor_configuration.cpp
+    src/motor_sdo_manager.cpp
+    src/motor_constants.cpp
 )
 
 target_link_libraries(draco4_ethercat 

@@ -6,9 +6,9 @@
  * This test validates the SDO system without requiring physical motor hardware.
  */
 
-#include "jd8_controller.hpp"
-#include "jd8_sdo_manager.hpp"
-#include "jd8_configuration.hpp"
+#include "motor_controller.hpp"
+#include "motor_sdo_manager.hpp"
+#include "motor_configuration.hpp"
 #include <iostream>
 #include <cassert>
 
@@ -16,7 +16,7 @@ void test_sdo_manager_creation() {
     std::cout << "=== SDO Manager Creation Test ===" << std::endl;
     
     // Test SDO manager creation
-    jd8::JD8SDOManager sdo_manager(1);
+    synapticon_motor::MotorSDOManager sdo_manager(1);
     
     // Test timeout setting
     sdo_manager.setTimeout(2000);
@@ -37,12 +37,12 @@ void test_configuration_to_sdo_integration() {
     std::cout << "\n=== Configuration to SDO Integration Test ===" << std::endl;
     
     // Load configuration
-    jd8::JD8ConfigParser config;
+    synapticon_motor::MotorConfigParser config;
     bool loaded = config.parseCSV("../config/JDLINK8_config_file.csv");
     assert(loaded);
     
     // Create SDO manager
-    jd8::JD8SDOManager sdo_manager(1);
+    synapticon_motor::MotorSDOManager sdo_manager(1);
     
     // Extract configuration data
     auto control_gains = config.getControlGains();
@@ -67,12 +67,12 @@ void test_configuration_to_sdo_integration() {
 void test_parameter_validation() {
     std::cout << "\n=== Parameter Validation Test ===" << std::endl;
     
-    jd8::JD8SDOManager sdo_manager(1);
+    synapticon_motor::MotorSDOManager sdo_manager(1);
     
     // Test SDO result enumeration
-    assert(std::string(jd8::JD8SDOManager::resultToString(jd8::JD8SDOManager::SDOResult::SUCCESS)) == "SUCCESS");
-    assert(std::string(jd8::JD8SDOManager::resultToString(jd8::JD8SDOManager::SDOResult::TIMEOUT)) == "TIMEOUT");
-    assert(std::string(jd8::JD8SDOManager::resultToString(jd8::JD8SDOManager::SDOResult::INVALID_PARAMETER)) == "INVALID_PARAMETER");
+    assert(std::string(synapticon_motor::MotorSDOManager::resultToString(synapticon_motor::MotorSDOManager::SDOResult::SUCCESS)) == "SUCCESS");
+    assert(std::string(synapticon_motor::MotorSDOManager::resultToString(synapticon_motor::MotorSDOManager::SDOResult::TIMEOUT)) == "TIMEOUT");
+    assert(std::string(synapticon_motor::MotorSDOManager::resultToString(synapticon_motor::MotorSDOManager::SDOResult::INVALID_PARAMETER)) == "INVALID_PARAMETER");
     
     std::cout << "SDO result enumeration working correctly" << std::endl;
     
@@ -87,7 +87,7 @@ void test_controller_integration() {
     std::cout << "\n=== Controller Integration Test ===" << std::endl;
     
     // Create controller
-    jd8::JD8Controller controller;
+    synapticon_motor::MotorController controller;
     
     // Test configuration loading
     bool config_loaded = controller.loadConfig("../config/JDLINK8_config_file.csv");
@@ -123,12 +123,12 @@ void test_upload_simulation() {
     std::cout << "\n=== Upload Process Simulation ===" << std::endl;
     
     // Load configuration
-    jd8::JD8ConfigParser config;
+    synapticon_motor::MotorConfigParser config;
     bool loaded = config.parseCSV("../config/JDLINK8_config_file.csv");
     assert(loaded);
     
     // Create SDO manager
-    jd8::JD8SDOManager sdo_manager(1);
+    synapticon_motor::MotorSDOManager sdo_manager(1);
     
     std::cout << "Simulating parameter upload process..." << std::endl;
     
@@ -172,7 +172,7 @@ void test_upload_simulation() {
 void demonstrate_expected_benefits() {
     std::cout << "\n=== Expected Motor Performance Benefits ===" << std::endl;
     
-    jd8::JD8ConfigParser config;
+    synapticon_motor::MotorConfigParser config;
     config.parseCSV("../config/JDLINK8_config_file.csv");
     auto gains = config.getControlGains();
     

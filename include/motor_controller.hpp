@@ -1,8 +1,8 @@
 /**
- * @file jd8_controller.hpp
- * @brief JD8 EtherCAT Motor Controller Interface
+ * @file motor_controller.hpp
+ * @brief EtherCAT Motor Controller Interface
  * 
- * This header defines the JD8Controller class for controlling JD8 servo motors
+ * This header defines the MotorController class for controlling Synapticon servo motors
  * via EtherCAT communication using the SOEM library. The controller implements
  * the CIA402 state machine for motor operation and provides velocity, position,
  * and torque control modes.
@@ -13,36 +13,36 @@
 #pragma once
 
 // Debug logging control - set to 0 for production builds
-#define JD8_DEBUG_LOGGING 0
+#define MOTOR_DEBUG_LOGGING 0
 
-#include "jd8_pdo_structures.hpp"
-#include "jd8_configuration.hpp"
-#include "jd8_sdo_manager.hpp"
+#include "motor_pdo_structures.hpp"
+#include "motor_configuration.hpp"
+#include "motor_sdo_manager.hpp"
 #include <soem/ethercat.h>
 #include <string>
 #include <atomic>
 #include <chrono>
 #include <memory>
 
-namespace jd8 {
+namespace synapticon_motor {
 
 /**
- * @class JD8Controller
- * @brief EtherCAT motor controller for JD8 servo motors
+ * @class MotorController
+ * @brief EtherCAT motor controller for Synapticon servo motors
  * 
- * Provides high-level interface for controlling JD8 servo motors over EtherCAT.
+ * Provides high-level interface for controlling Synapticon servo motors over EtherCAT.
  * Implements CIA402 state machine, supports multiple control modes, and includes
  * safety features like torque ramping and fault recovery.
  */
-class JD8Controller {
+class MotorController {
 public:
     /**
      * @brief Available motor control modes
      */
     enum ControlMode {
-        VELOCITY_MODE = JD8Constants::VELOCITY_MODE,  ///< Velocity control mode
-        POSITION_MODE = JD8Constants::POSITION_MODE,  ///< Position control mode
-        TORQUE_MODE = JD8Constants::TORQUE_MODE       ///< Torque control mode
+        VELOCITY_MODE = MotorConstants::VELOCITY_MODE,  ///< Velocity control mode
+        POSITION_MODE = MotorConstants::POSITION_MODE,  ///< Position control mode
+        TORQUE_MODE = MotorConstants::TORQUE_MODE       ///< Torque control mode
     };
     
     /**
@@ -66,12 +66,12 @@ public:
      * @brief Constructor
      * @param slave_index EtherCAT slave index (default: 1)
      */
-    JD8Controller(int slave_index = 1);
+    MotorController(int slave_index = 1);
     
     /**
      * @brief Destructor - automatically stops operation
      */
-    ~JD8Controller();
+    ~MotorController();
     
     // === Core EtherCAT Operations ===
     
@@ -118,7 +118,7 @@ public:
      * @brief Get current configuration parser
      * @return Pointer to configuration parser, nullptr if not loaded
      */
-    const JD8ConfigParser* getConfig() const;
+    const MotorConfigParser* getConfig() const;
     
     /**
      * @brief Check if configuration is loaded
@@ -142,7 +142,7 @@ public:
      * @brief Get SDO manager for advanced operations
      * @return Pointer to SDO manager, nullptr if not available
      */
-    const JD8SDOManager* getSDO() const;
+    const MotorSDOManager* getSDO() const;
     
     // === Motor Control ===
     
@@ -373,8 +373,8 @@ private:
     std::chrono::steady_clock::time_point last_position_time_;  ///< Timestamp of last position command
     
     // Configuration management
-    std::unique_ptr<JD8ConfigParser> config_parser_;  ///< Motor configuration parser
-    std::unique_ptr<JD8SDOManager> sdo_manager_;      ///< SDO communication manager
+    std::unique_ptr<MotorConfigParser> config_parser_;  ///< Motor configuration parser
+    std::unique_ptr<MotorSDOManager> sdo_manager_;      ///< SDO communication manager
 };
 
-} // namespace jd8
+} // namespace synapticon_motor
