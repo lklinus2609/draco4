@@ -279,7 +279,7 @@ public:
     /**
      * @brief Emergency stop - immediately halt all motion
      */
-    void emergency_stop();
+    void eStop();
     
     /**
      * @brief Check if controller is in fault recovery mode

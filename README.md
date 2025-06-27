@@ -121,7 +121,7 @@ sudo ./test_jd8_velocity eth0  # Replace with your interface
 - **Root Privileges**: EtherCAT communication requires root privileges
 - **Network Interface**: Ensure the specified network interface is connected to your EtherCAT network
 - **Motor Safety**: The library includes safety limits for torque and position changes
-- **Emergency Stop**: Use `emergency_stop()` method for immediate motion halt
+- **Emergency Stop**: Use `eStop()` method for immediate motion halt
 - **Real-time Timing**: Maintain 4ms (250Hz) update cycles for optimal performance
 
 ## Contributing

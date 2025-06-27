@@ -457,7 +457,7 @@ JD8Controller::ControlMode JD8Controller::get_current_mode() const {
     return current_mode_;
 }
 
-void JD8Controller::emergency_stop() {
+void JD8Controller::eStop() {
     log_error(ErrorSeverity::CRITICAL, "Emergency stop activated");
     
     fault_recovery_active_ = true;
